@@ -34,12 +34,12 @@ def chat_epoch(model,dict_data):
     nums=0
     for before,after in bar:
 
+        print(before.shape)
+        pre_tokens=model.inference(before,prev_pos=0,max_length=256)
 
-        pre_tokens=model(before,prev_pos=2)
+        # pre_tokens=torch.argmax(torch.softmax(pre_tokens,dim=-1),dim=-1)
 
-        pre_tokens=torch.argmax(torch.softmax(pre_tokens,dim=-1),dim=-1)
-
-        pre_tokens=pre_tokens.cpu().tolist()
+        # pre_tokens=pre_tokens.cpu().tolist()
         after=after.cpu().tolist()
 
         pre_text_list=[model.tokenizer.decode(pre_tokens[i]) for i in range(len(pre_tokens))]
@@ -47,27 +47,40 @@ def chat_epoch(model,dict_data):
         
 
 
-
-        print(pre_text_list)
+        print()
         print(true_text_list)
+        print(pre_text_list)
+        print()
 
-        break
+        
+def shell_epoch(model,dict_data):
+    while True:
+        text=input("prompt：")
+        token=model.tokenizer.encode(text,bos=True,eos=True)
+        token=torch.tensor(token, dtype=torch.long, device="cuda").unsqueeze(0)
 
-    
+        pre_tokens=model.inference(token[:,:-1],prev_pos=0,max_length=256)
+
+
+        pre_text_list=[model.tokenizer.decode(pre_tokens[i]) for i in range(len(pre_tokens))]
+        
+        print(pre_text_list)
+        print()
 
 if __name__=="__main__":
     model = Llama.build(
-        ckpt_dir="weight\pre_train\epoch_24.pt",
         tokenizer_path="weight/tokenizer_chinese.model",
-        max_seq_len=512,
+        max_seq_len=2048,
         max_batch_size=8,
     ).to(config.device)
+    model.load_state_dict(torch.load("weight\pre_train\pretrain_epoch_35.pt"))
 
-    pre_dataset=PreTrainDataset(r"D:\work\Datasets\MNBVC\20230196\github.20230196.3.鏂伴椈\11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=256)
-    pre_dataloader=DataLoader(pre_dataset,batch_size=2,shuffle=True,collate_fn=my_collate_fn)
+    pre_dataset=PreTrainDataset(r"D:\work\Datasets\MNBVC\20230196\github.20230196.3.鏂伴椈\11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=40)
+    pre_dataloader=DataLoader(pre_dataset,batch_size=1,shuffle=True,collate_fn=my_collate_fn)
 
     dict_data=dict()
     dict_data["pretraindataloader"]=pre_dataloader
 
 
-    chat_epoch(model,dict_data)
+    # chat_epoch(model,dict_data)
+    shell_epoch(model,dict_data)

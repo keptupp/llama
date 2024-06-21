@@ -55,7 +55,6 @@ UNSAFE_ERROR = "Error: special tags are not allowed as part of the prompt."
 class Llama(nn.Module):
     @staticmethod
     def build(
-        ckpt_dir: str,
         tokenizer_path: str,
         max_seq_len: int,
         max_batch_size: int,
@@ -104,8 +103,7 @@ class Llama(nn.Module):
         # torch.set_default_tensor_type(torch.cuda.Tensor)
         
         model = Transformer(model_args).to(config.device)
-        checkpoint = torch.load(ckpt_dir)
-        model.load_state_dict(checkpoint, strict=False)
+
         print("模型配置参数",model_args)
         num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         print(f'模型参数量: {num_params/1e6}M')
@@ -126,3 +124,28 @@ class Llama(nn.Module):
         logits = self.model(prompt_tokens, prev_pos)
         
         return logits
+    
+    def inference(
+        self,
+        prompt_tokens: List[List[int]],
+        prev_pos=0,
+        max_length=256
+    ):  
+        pre_text=[]
+        #目前这个方法还只适用于batchsize=1
+        for i in range(max_length):
+            logits = self.model(prompt_tokens, prev_pos)
+            pre_tokens=torch.argmax(torch.softmax(logits,dim=-1),dim=-1)
+
+            last_token=pre_tokens[:,-1].item()
+
+            pre_text.append(last_token)
+
+            if(last_token==self.tokenizer.eos_id):
+                break
+
+            prompt_tokens=torch.cat([prompt_tokens,pre_tokens[:,-1].unsqueeze(0)],dim=1)
+
+            # print(prompt_tokens.shape)
+    
+        return [pre_text]
