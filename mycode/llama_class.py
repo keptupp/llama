@@ -104,7 +104,8 @@ class Llama(nn.Module):
         # torch.set_default_tensor_type(torch.cuda.Tensor)
         
         model = Transformer(model_args).to(config.device)
-        # model.load_state_dict(checkpoint, strict=False)
+        checkpoint = torch.load(ckpt_dir)
+        model.load_state_dict(checkpoint, strict=False)
         print("模型配置参数",model_args)
         num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         print(f'模型参数量: {num_params/1e6}M')
@@ -119,9 +120,8 @@ class Llama(nn.Module):
     def forward(
         self,
         prompt_tokens: List[List[int]],
+        prev_pos=0
     ):
-
-        prev_pos = 0
 
         logits = self.model(prompt_tokens, prev_pos)
         

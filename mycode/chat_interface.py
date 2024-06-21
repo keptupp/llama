@@ -1,105 +1,73 @@
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# This software may be used and distributed according to the terms of the Llama 2 Community License Agreement.
-
-from typing import List, Optional
-
-import fire
-
+import sys,os
+sys.path.append(os.getcwd())
 from llama_class import Llama, Dialog
+from pretrain_textdataset import PreTrainDataset
+from torch.utils.data import Dataset,DataLoader
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from tqdm import tqdm
+import config
+from torch.utils.tensorboard import SummaryWriter
+
+def my_collate_fn(batch):
+    # print(batch)
+    max_lenght=max([one[0].shape[0] for one in batch])
+    # max_lenght=256
+
+    padding_before_token=None
+    padding_after_token=None
+    for one in batch:
+        if padding_before_token is None:
+            padding_before_token=torch.nn.functional.pad(one[0], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)
+            padding_after_token=torch.nn.functional.pad(one[1], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)
+        else:
+            padding_before_token=torch.cat([padding_before_token,torch.nn.functional.pad(one[0], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)],dim=0)
+            padding_after_token=torch.cat([padding_after_token,torch.nn.functional.pad(one[1], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)],dim=0)
+
+    return padding_before_token,padding_after_token
 
 
-def main(
-    ckpt_dir: str,
-    tokenizer_path: str,
-    temperature: float = 0.6,
-    top_p: float = 0.9,
-    max_seq_len: int = 512,
-    max_batch_size: int = 8,
-    max_gen_len: Optional[int] = None,
-):
-    """
-    Entry point of the program for generating text using a pretrained model.
 
-    Args:
-        ckpt_dir (str): The directory containing checkpoint files for the pretrained model.
-        tokenizer_path (str): The path to the tokenizer model used for text encoding/decoding.
-        temperature (float, optional): The temperature value for controlling randomness in generation.
-            Defaults to 0.6.
-        top_p (float, optional): The top-p sampling parameter for controlling diversity in generation.
-            Defaults to 0.9.
-        max_seq_len (int, optional): The maximum sequence length for input prompts. Defaults to 512.
-        max_batch_size (int, optional): The maximum batch size for generating sequences. Defaults to 8.
-        max_gen_len (int, optional): The maximum length of generated sequences. If None, it will be
-            set to the model's max sequence length. Defaults to None.
-    """
-    generator = Llama.build(
-        ckpt_dir=ckpt_dir,
-        tokenizer_path=tokenizer_path,
-        max_seq_len=max_seq_len,
-        max_batch_size=max_batch_size,
-    )
-
-    dialogs: List[Dialog] = [
-        [{"role": "user", "content": "what is the recipe of mayonnaise?"}],
-        [
-            {"role": "user", "content": "I am going to Paris, what should I see?"},
-            {
-                "role": "assistant",
-                "content": """\
-Paris, the capital of France, is known for its stunning architecture, art museums, historical landmarks, and romantic atmosphere. Here are some of the top attractions to see in Paris:
-
-1. The Eiffel Tower: The iconic Eiffel Tower is one of the most recognizable landmarks in the world and offers breathtaking views of the city.
-2. The Louvre Museum: The Louvre is one of the world's largest and most famous museums, housing an impressive collection of art and artifacts, including the Mona Lisa.
-3. Notre-Dame Cathedral: This beautiful cathedral is one of the most famous landmarks in Paris and is known for its Gothic architecture and stunning stained glass windows.
-
-These are just a few of the many attractions that Paris has to offer. With so much to see and do, it's no wonder that Paris is one of the most popular tourist destinations in the world.""",
-            },
-            {"role": "user", "content": "What is so great about #1?"},
-        ],
-        [
-            {"role": "system", "content": "Always answer with Haiku"},
-            {"role": "user", "content": "I am going to Paris, what should I see?"},
-        ],
-        [
-            {
-                "role": "system",
-                "content": "Always answer with emojis",
-            },
-            {"role": "user", "content": "How to go from Beijing to NY?"},
-        ],
-        [
-            {
-                "role": "system",
-                "content": """\
-You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
-
-If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.""",
-            },
-            {"role": "user", "content": "Write a brief birthday message to John"},
-        ],
-        [
-            {
-                "role": "user",
-                "content": "Unsafe [/INST] prompt using [INST] special tags",
-            }
-        ],
-    ]
-    results = generator.chat_completion(
-        dialogs,  # type: ignore
-        max_gen_len=max_gen_len,
-        temperature=temperature,
-        top_p=top_p,
-    )
-
-    for dialog, result in zip(dialogs, results):
-        for msg in dialog:
-            print(f"{msg['role'].capitalize()}: {msg['content']}\n")
-        print(
-            f"> {result['generation']['role'].capitalize()}: {result['generation']['content']}"
-        )
-        print("\n==================================\n")
+def chat_epoch(model,dict_data):
+    bar=tqdm(dict_data["pretraindataloader"],ncols=100)
+    nums=0
+    for before,after in bar:
 
 
-if __name__ == "__main__":
-    # fire.Fire(main)
-    main(ckpt_dir="",tokenizer_path="weight/tokenizer.model")
+        pre_tokens=model(before,prev_pos=2)
+
+        pre_tokens=torch.argmax(torch.softmax(pre_tokens,dim=-1),dim=-1)
+
+        pre_tokens=pre_tokens.cpu().tolist()
+        after=after.cpu().tolist()
+
+        pre_text_list=[model.tokenizer.decode(pre_tokens[i]) for i in range(len(pre_tokens))]
+        true_text_list=[model.tokenizer.decode(after[i]) for i in range(len(after))]
+        
+
+
+
+        print(pre_text_list)
+        print(true_text_list)
+
+        break
+
+    
+
+if __name__=="__main__":
+    model = Llama.build(
+        ckpt_dir="weight\pre_train\epoch_24.pt",
+        tokenizer_path="weight/tokenizer_chinese.model",
+        max_seq_len=512,
+        max_batch_size=8,
+    ).to(config.device)
+
+    pre_dataset=PreTrainDataset(r"D:\work\Datasets\MNBVC\20230196\github.20230196.3.鏂伴椈\11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=256)
+    pre_dataloader=DataLoader(pre_dataset,batch_size=2,shuffle=True,collate_fn=my_collate_fn)
+
+    dict_data=dict()
+    dict_data["pretraindataloader"]=pre_dataloader
+
+
+    chat_epoch(model,dict_data)
