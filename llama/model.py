@@ -228,22 +228,22 @@ class Attention(nn.Module):
             bias=False,
         )
 
-        self.cache_k = torch.zeros(
-            (
-                args.max_batch_size,
-                args.max_seq_len,
-                self.n_local_kv_heads,
-                self.head_dim,
-            )
-        ).cuda()
-        self.cache_v = torch.zeros(
-            (
-                args.max_batch_size,
-                args.max_seq_len,
-                self.n_local_kv_heads,
-                self.head_dim,
-            )
-        ).cuda()
+        # self.cache_k = torch.zeros(
+        #     (
+        #         args.max_batch_size,
+        #         args.max_seq_len,
+        #         self.n_local_kv_heads,
+        #         self.head_dim,
+        #     )
+        # ).cuda()
+        # self.cache_v = torch.zeros(
+        #     (
+        #         args.max_batch_size,
+        #         args.max_seq_len,
+        #         self.n_local_kv_heads,
+        #         self.head_dim,
+        #     )
+        # ).cuda()
 
     def forward(
         self,
@@ -277,14 +277,19 @@ class Attention(nn.Module):
 
         xq, xk = apply_rotary_emb(xq, xk, freqs_cis=freqs_cis)
 
-        self.cache_k = self.cache_k.to(xq)
-        self.cache_v = self.cache_v.to(xq)
+        # self.cache_k = self.cache_k.to(xq)
+        # self.cache_v = self.cache_v.to(xq)
 
-        self.cache_k[:bsz, start_pos : start_pos + seqlen] = xk.detach().clone()
-        self.cache_v[:bsz, start_pos : start_pos + seqlen] = xv.detach().clone()
+        # self.cache_k[:bsz, start_pos : start_pos + seqlen] = xk.detach().clone()
+        # self.cache_v[:bsz, start_pos : start_pos + seqlen] = xv.detach().clone()
 
-        keys = self.cache_k[:bsz, : start_pos + seqlen]
-        values = self.cache_v[:bsz, : start_pos + seqlen]
+        # keys = self.cache_k[:bsz, : start_pos + seqlen]
+        # values = self.cache_v[:bsz, : start_pos + seqlen]
+
+        keys = xk
+
+        values=xv
+
 
         # repeat k/v heads if n_kv_heads < n_heads
         keys = repeat_kv(keys, self.n_rep)  # (bs, cache_len + seqlen, n_local_heads, head_dim)
@@ -293,6 +298,7 @@ class Attention(nn.Module):
         xq = xq.transpose(1, 2)  # (bs, n_local_heads, seqlen, head_dim)
         keys = keys.transpose(1, 2) # (bs, n_local_heads, cache_len + seqlen, head_dim)
         values = values.transpose(1, 2) # (bs, n_local_heads, cache_len + seqlen, head_dim)
+        print("xq",xq.shape,"keys",keys.shape)
         scores = torch.matmul(xq, keys.transpose(2, 3)) / math.sqrt(self.head_dim)
 
         if mask is not None:
@@ -470,7 +476,7 @@ class Transformer(nn.Module):
         # print("self.freqs_cis.shape",self.freqs_cis.shape)
         # print("h",h.shape)
         # self.freqs_cis = self.freqs_cis.to(h.device)
-        freqs_cis = self.freqs_cis[start_pos : start_pos + seqlen]
+        freqs_cis = self.freqs_cis[:seqlen]
         # print("freqs_cis.shape",freqs_cis.shape)
 
         mask = None
@@ -478,26 +484,28 @@ class Transformer(nn.Module):
             mask = torch.full(
                 (seqlen, seqlen), float("-inf"), device=tokens.device
             )
-            # print("mask",mask.shape)
+            print("mask",mask.shape)
 
             mask = torch.triu(mask, diagonal=1)
 
-            # print("mask",mask.shape)
+            print("mask",mask.shape)
 
             # When performing key-value caching, we compute the attention scores
             # only for the new sequence. Thus, the matrix of scores is of size
             # (seqlen, cache_len + seqlen), and the only masked entries are (i, j) for
             # j > cache_len + i, since row i corresponds to token cache_len + i.
             mask = torch.hstack([
-                torch.zeros((seqlen, start_pos), device=tokens.device),
+                torch.zeros((seqlen, 0), device=tokens.device),
                 mask
             ]).type_as(h)
 
-            # print("mask",mask.shape)
+            mask[:start_pos, :start_pos] = 0
+
+            print("mask",mask.shape)
+            print(mask)
 
         for layer in self.layers:
-            h = layer(h, start_pos, freqs_cis, mask)
-            # print("h",h.shape)
+            h = layer(h, 0, freqs_cis, mask)
         h = self.norm(h)
         # output = self.output(h).float()
         output = self.output(h)
