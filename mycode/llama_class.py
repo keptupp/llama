@@ -123,3 +123,28 @@ class Llama(nn.Module):
         logits = self.model(prompt_tokens, prev_pos)
         
         return logits
+    
+    def inference(
+        self,
+        prompt_tokens: List[List[int]],
+        prev_pos=0,
+        max_length=256
+    ):  
+        pre_text=[]
+        #目前这个方法还只适用于batchsize=1
+        for i in range(max_length):
+            logits = self.model(prompt_tokens, prev_pos)
+            pre_tokens=torch.argmax(torch.softmax(logits,dim=-1),dim=-1)
+
+            last_token=pre_tokens[:,-1].item()
+
+            pre_text.append(last_token)
+
+            if(last_token==self.tokenizer.eos_id):
+                break
+
+            prompt_tokens=torch.cat([prompt_tokens,pre_tokens[:,-1].unsqueeze(0)],dim=1)
+
+            # print(prompt_tokens.shape)
+    
+        return [pre_text]

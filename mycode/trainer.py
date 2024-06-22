@@ -2,6 +2,7 @@ import sys,os
 sys.path.append(os.getcwd())
 from llama_class import Llama, Dialog
 from pretrain_textdataset import PreTrainDataset
+from chat_dataset import ChatDataset
 from torch.utils.data import Dataset,DataLoader
 import torch
 import torch.nn as nn
@@ -79,6 +80,9 @@ if __name__=="__main__":
 
     pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=256)
     pre_dataloader=DataLoader(pre_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
+
+    chat_dataset=ChatDataset(r"D:\work\Datasets\RedGPT-Dataset-V1-CN\RedGPT-Dataset-V1-CN.json",r"weight/tokenizer.model",min_len=32,max_len=2048)
+    chat_dataloader=DataLoader(pre_dataset,batch_size=1,shuffle=True)
 
     dict_data=dict()
     dict_data["pretraindataloader"]=pre_dataloader

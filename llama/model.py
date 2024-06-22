@@ -499,6 +499,8 @@ class Transformer(nn.Module):
                 mask
             ]).type_as(h)
 
+            # print(mask)
+
             mask[:start_pos, :start_pos] = 0
 
             # print("mask",mask.shape)
