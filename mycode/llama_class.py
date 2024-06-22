@@ -55,7 +55,6 @@ UNSAFE_ERROR = "Error: special tags are not allowed as part of the prompt."
 class Llama(nn.Module):
     @staticmethod
     def build(
-        ckpt_dir: str,
         tokenizer_path: str,
         max_seq_len: int,
         max_batch_size: int,
@@ -104,8 +103,6 @@ class Llama(nn.Module):
         # torch.set_default_tensor_type(torch.cuda.Tensor)
         
         model = Transformer(model_args).to(config.device)
-        checkpoint = torch.load(ckpt_dir)
-        model.load_state_dict(checkpoint, strict=False)
         print("模型配置参数",model_args)
         num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         print(f'模型参数量: {num_params/1e6}M')

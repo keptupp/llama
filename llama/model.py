@@ -298,7 +298,7 @@ class Attention(nn.Module):
         xq = xq.transpose(1, 2)  # (bs, n_local_heads, seqlen, head_dim)
         keys = keys.transpose(1, 2) # (bs, n_local_heads, cache_len + seqlen, head_dim)
         values = values.transpose(1, 2) # (bs, n_local_heads, cache_len + seqlen, head_dim)
-        print("xq",xq.shape,"keys",keys.shape)
+        # print("xq",xq.shape,"keys",keys.shape)
         scores = torch.matmul(xq, keys.transpose(2, 3)) / math.sqrt(self.head_dim)
 
         if mask is not None:
@@ -484,11 +484,11 @@ class Transformer(nn.Module):
             mask = torch.full(
                 (seqlen, seqlen), float("-inf"), device=tokens.device
             )
-            print("mask",mask.shape)
+            # print("mask",mask.shape)
 
             mask = torch.triu(mask, diagonal=1)
 
-            print("mask",mask.shape)
+            # print("mask",mask.shape)
 
             # When performing key-value caching, we compute the attention scores
             # only for the new sequence. Thus, the matrix of scores is of size
@@ -501,8 +501,8 @@ class Transformer(nn.Module):
 
             mask[:start_pos, :start_pos] = 0
 
-            print("mask",mask.shape)
-            print(mask)
+            # print("mask",mask.shape)
+            # print(mask)
 
         for layer in self.layers:
             h = layer(h, 0, freqs_cis, mask)
