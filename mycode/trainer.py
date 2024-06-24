@@ -13,9 +13,8 @@ import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 
 def my_collate_fn(batch):
-    # print(batch)
     max_lenght=max([one[0].shape[0] for one in batch])
-    # max_lenght=256
+    # max_lenght=2048
 
     padding_before_token=None
     padding_after_token=None
@@ -73,24 +72,24 @@ def train(model,dict_data):
 if __name__=="__main__":
     model = Llama.build(
         tokenizer_path="weight/tokenizer.model",
-        max_seq_len=512,
+        max_seq_len=2048,
         max_batch_size=8,
     ).to(config.device)
-    model.load_state_dict(torch.load("weight/pre_train/pretrain_epoch_35.pt"))
+    model.load_state_dict(torch.load("weight/pre_train/pretrain.pt"))
 
-    pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=256)
-    pre_dataloader=DataLoader(pre_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
+    # pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=256)
+    # pre_dataloader=DataLoader(pre_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
 
-    chat_dataset=ChatDataset(r"D:\work\Datasets\RedGPT-Dataset-V1-CN\RedGPT-Dataset-V1-CN.json",r"weight/tokenizer.model",min_len=32,max_len=2048)
-    chat_dataloader=DataLoader(pre_dataset,batch_size=1,shuffle=True)
+    chat_dataset=ChatDataset(r"/home/liuzheng/Data/RedGPT-Dataset-V1-CN.json",r"weight/tokenizer.model",min_len=32,max_len=2048)
+    chat_dataloader=DataLoader(chat_dataset,batch_size=4,shuffle=True,collate_fn=my_collate_fn)
 
     dict_data=dict()
-    dict_data["pretraindataloader"]=pre_dataloader
+    dict_data["pretraindataloader"]=chat_dataloader
     dict_data["crossentropyloss"]=nn.CrossEntropyLoss(reduction='none')
 
-    dict_data["epoch"]=20
+    dict_data["epoch"]=10
     dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=1e-3)
-    dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(pre_dataloader),eta_min=1e-4)
+    dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(chat_dataloader),eta_min=1e-4)
     dict_data["writer"] = SummaryWriter('weight/log_tensorboard')
 
 
