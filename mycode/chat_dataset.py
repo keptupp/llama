@@ -68,7 +68,7 @@ def read_pCLUEJSON(text_path,tokenizer):
             answer=getattr(row,'target')
             one_token=tokenizer.encode("资料：",bos=True,eos=True)
             one_token+=tokenizer.encode("\n\n人类："+question,bos=False,eos=False)
-            one_token+=tokenizer.encode("\n\n助手："+answer,bos=False,eos=False)
+            one_token+=tokenizer.encode("\n\n助手："+answer,bos=False,eos=True)
 
             total_chat_token.append(one_token)
         return total_chat_token
@@ -85,13 +85,20 @@ class ChatDataset(Dataset):
        
         self.data_section=[]
         self.tokenizer=Tokenizer(tokenizer_path)
+        self.max_len=max_len
 
         self.data_section+=read_REDGPTJSON(text_path["redgpt"],self.tokenizer)
+        print("redgpt数据集")
         self.data_section+=read_NaturalConvJSON(text_path["naturalconv"],self.tokenizer)
+        print("naturalconv数据集")
+        self.data_section+=read_pCLUEJSON(text_path["pclue"],self.tokenizer)
+        print("pclue数据集")
         
 
     def __getitem__(self, index):
         chat_token=self.data_section[index]
+        if(len(chat_token)>self.max_len):
+            chat_token=chat_token[:self.max_len]
         token=torch.tensor(chat_token, dtype=torch.long, device="cuda")
         return token[:-1].detach().clone(),token[1:].detach().clone()
 
