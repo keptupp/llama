@@ -92,11 +92,9 @@ if __name__=="__main__":
     ).to(config.device)
     model.load_state_dict(torch.load("weight\epoch_10.pt"))
 
-    pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=40)
-    pre_dataloader=DataLoader(pre_dataset,batch_size=1,shuffle=True,collate_fn=my_collate_fn)
 
     dict_data=dict()
-    dict_data["pretraindataloader"]=pre_dataloader
+
 
     # wikipedia.set_lang("zh")
     # print(wikipedia.search("减肥"))
