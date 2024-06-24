@@ -86,13 +86,13 @@ def shell_epoch(model,dict_data):
 
 if __name__=="__main__":
     model = Llama.build(
-        tokenizer_path="weight/tokenizer_chinese.model",
+        tokenizer_path="weight/tokenizer.model",
         max_seq_len=2048,
         max_batch_size=8,
     ).to(config.device)
     model.load_state_dict(torch.load("weight\epoch_10.pt"))
 
-    pre_dataset=PreTrainDataset(r"D:\work\Datasets\MNBVC\20230196\github.20230196.3.鏂伴椈\11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=40)
+    pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=40)
     pre_dataloader=DataLoader(pre_dataset,batch_size=1,shuffle=True,collate_fn=my_collate_fn)
 
     dict_data=dict()
