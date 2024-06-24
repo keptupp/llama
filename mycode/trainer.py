@@ -80,8 +80,11 @@ if __name__=="__main__":
     # pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=256)
     # pre_dataloader=DataLoader(pre_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
 
-    chat_dataset=ChatDataset(r"/home/liuzheng/Data/RedGPT-Dataset-V1-CN.json",r"weight/tokenizer.model",min_len=32,max_len=2048)
-    chat_dataloader=DataLoader(chat_dataset,batch_size=4,shuffle=True,collate_fn=my_collate_fn)
+    data_text=dict()
+    data_text["redgpt"]=r"D:\work\Datasets\RedGPT-Dataset-V1-CN\RedGPT-Dataset-V1-CN.json"
+    data_text["naturalconv"]=r"D:\work\Datasets\NaturalConv_Release_20210318\dialog_release.json"
+    chat_dataset=ChatDataset(data_text,r"weight/tokenizer.model",min_len=32,max_len=2048)
+    chat_dataloader=DataLoader(chat_dataset,batch_size=1,shuffle=True)
 
     dict_data=dict()
     dict_data["pretraindataloader"]=chat_dataloader

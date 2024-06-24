@@ -9,6 +9,8 @@ import torch.optim as optim
 from tqdm import tqdm
 import config
 from torch.utils.tensorboard import SummaryWriter
+import wikipedia
+import zhconv
 
 def my_collate_fn(batch):
     # print(batch)
@@ -30,32 +32,47 @@ def my_collate_fn(batch):
 
 
 def chat_epoch(model,dict_data):
-    bar=tqdm(dict_data["pretraindataloader"],ncols=100)
-    nums=0
-    for before,after in bar:
+    total_token=[]
+    reference=""
+    text=input("资料：")
+    wikipedia.set_lang("zh")
+    # search_list=wikipedia.search(text)
+    # print(search_list)
+    # for index,one in enumerate(search_list[:3]):
+    reference+=wikipedia.summary(text,sentences=10)
+    reference=zhconv.convert(reference, 'zh-hans')
+    print("资料：",len(reference),reference)
+    reference_token=model.tokenizer.encode("资料:"+reference,bos=True,eos=True)
+    
+    first=True
+    while True:
+        print()
+        text=input("人类: ")
 
-        print(before.shape)
-        pre_tokens=model.inference(before,prev_pos=0,max_length=256)
+        if first:#第一次对话，搜索资料
+            total_token=total_token+model.tokenizer.encode("人类: "+text+"\n\n助手: ",bos=False,eos=False)
+            first=False
+        else:
+            total_token=total_token+model.tokenizer.encode("\n\n人类: "+text+"\n\n助手: ",bos=False,eos=False)
 
-        # pre_tokens=torch.argmax(torch.softmax(pre_tokens,dim=-1),dim=-1)
+        token=torch.tensor(reference_token+total_token, dtype=torch.long, device="cuda").unsqueeze(0)
 
-        # pre_tokens=pre_tokens.cpu().tolist()
-        after=after.cpu().tolist()
+        pre_tokens=model.inference(token,prev_pos=0,max_length=256)
+
 
         pre_text_list=[model.tokenizer.decode(pre_tokens[i]) for i in range(len(pre_tokens))]
-        true_text_list=[model.tokenizer.decode(after[i]) for i in range(len(after))]
         
-
-
+        print("助手: ",pre_text_list[0])
         print()
-        print(true_text_list)
-        print(pre_text_list)
-        print()
+
+        pre_token=model.tokenizer.encode(pre_text_list[0],bos=False,eos=False)
+        total_token=total_token+pre_token
 
         
 def shell_epoch(model,dict_data):
+    
     while True:
-        text=input("prompt：")
+        text=input("prompt: ")
         token=model.tokenizer.encode(text,bos=True,eos=True)
         token=torch.tensor(token, dtype=torch.long, device="cuda").unsqueeze(0)
 
@@ -73,7 +90,7 @@ if __name__=="__main__":
         max_seq_len=2048,
         max_batch_size=8,
     ).to(config.device)
-    model.load_state_dict(torch.load("weight/pre_train/pretrain.pt"))
+    model.load_state_dict(torch.load("weight\epoch_10.pt"))
 
     pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=40)
     pre_dataloader=DataLoader(pre_dataset,batch_size=1,shuffle=True,collate_fn=my_collate_fn)
@@ -81,6 +98,9 @@ if __name__=="__main__":
     dict_data=dict()
     dict_data["pretraindataloader"]=pre_dataloader
 
+    # wikipedia.set_lang("zh")
+    # print(wikipedia.search("减肥"))
 
-    # chat_epoch(model,dict_data)
-    shell_epoch(model,dict_data)
+
+    chat_epoch(model,dict_data)
+    # shell_epoch(model,dict_data)
