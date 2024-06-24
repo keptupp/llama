@@ -75,19 +75,22 @@ if __name__=="__main__":
         max_batch_size=8,
     ).to(config.device)
 
-    pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=256)
-    pre_dataloader=DataLoader(pre_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
+    # pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=256)
+    # pre_dataloader=DataLoader(pre_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
 
-    chat_dataset=ChatDataset(r"D:\work\Datasets\RedGPT-Dataset-V1-CN\RedGPT-Dataset-V1-CN.json",r"weight/tokenizer.model",min_len=32,max_len=2048)
-    chat_dataloader=DataLoader(pre_dataset,batch_size=1,shuffle=True)
+    data_text=dict()
+    data_text["redgpt"]=r"D:\work\Datasets\RedGPT-Dataset-V1-CN\RedGPT-Dataset-V1-CN.json"
+    data_text["naturalconv"]=r"D:\work\Datasets\NaturalConv_Release_20210318\dialog_release.json"
+    chat_dataset=ChatDataset(data_text,r"weight/tokenizer.model",min_len=32,max_len=2048)
+    chat_dataloader=DataLoader(chat_dataset,batch_size=1,shuffle=True)
 
     dict_data=dict()
-    dict_data["pretraindataloader"]=pre_dataloader
+    dict_data["pretraindataloader"]=chat_dataloader
     dict_data["crossentropyloss"]=nn.CrossEntropyLoss(reduction='none')
 
     dict_data["epoch"]=50
     dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=1e-3)
-    dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(pre_dataloader),eta_min=3e-4)
+    dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(chat_dataloader),eta_min=3e-4)
     dict_data["writer"] = SummaryWriter('weight/log_tensorboard')
 
 
