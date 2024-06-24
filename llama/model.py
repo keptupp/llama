@@ -503,8 +503,6 @@ class Transformer(nn.Module):
 
             mask[:start_pos, :start_pos] = 0
 
-            # print(mask)
-
             # print("mask",mask.shape)
             # print(mask)
 

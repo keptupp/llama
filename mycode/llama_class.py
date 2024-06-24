@@ -103,7 +103,6 @@ class Llama(nn.Module):
         # torch.set_default_tensor_type(torch.cuda.Tensor)
         
         model = Transformer(model_args).to(config.device)
-
         print("模型配置参数",model_args)
         num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         print(f'模型参数量: {num_params/1e6}M')
