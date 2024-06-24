@@ -57,6 +57,28 @@ def read_NaturalConvJSON(text_path,tokenizer):
         total_chat_token.append(chat_token)
     return total_chat_token
 
+def read_pCLUEJSON(text_path,tokenizer):
+    total_chat_token=[]
+
+    def read_one_data(text_path,tokenizer):
+        data=pd.read_json(text_path,lines=True)
+        total_chat_token=[]
+        for row in data.itertuples():
+            question=getattr(row,'input').replace("\n答案：","")
+            answer=getattr(row,'target')
+            one_token=tokenizer.encode("资料：",bos=True,eos=True)
+            one_token+=tokenizer.encode("\n\n人类："+question,bos=False,eos=False)
+            one_token+=tokenizer.encode("\n\n助手："+answer,bos=False,eos=False)
+
+            total_chat_token.append(one_token)
+        return total_chat_token
+    
+    for one_path in text_path:
+        total_chat_token+=read_one_data(one_path,tokenizer)
+    
+    return total_chat_token
+
+
 #聊天，每次助手对完话均有一个结束符号3
 class ChatDataset(Dataset):
     def __init__(self,text_path,tokenizer_path,min_len,max_len):
@@ -86,5 +108,12 @@ if __name__=="__main__":
 
     # read_REDGPTJSON(r"D:\work\Datasets\RedGPT-Dataset-V1-CN\RedGPT-Dataset-V1-CN.json",tokenizer)
     
-    token=read_NaturalConvJSON(r"D:\work\Datasets\NaturalConv_Release_20210318\dialog_release.json",tokenizer=tokenizer)
-    print(tokenizer.decode(token[1]))
+    # token=read_NaturalConvJSON(r"D:\work\Datasets\NaturalConv_Release_20210318\dialog_release.json",tokenizer=tokenizer)
+    # print(tokenizer.decode(token[1]))
+
+    text_path=[
+        r"D:\work\Datasets\pCLUE-main\datasets\pCLUE_train_1.json",
+        r"D:\work\Datasets\pCLUE-main\datasets\pCLUE_train_2.json"
+    ]
+    token=read_pCLUEJSON(text_path,tokenizer)
+    print(tokenizer.decode(token[100]))
