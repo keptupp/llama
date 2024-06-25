@@ -104,7 +104,6 @@ class ChatDataset(Dataset):
 
     def __len__(self):
         return len(self.data_section)
-    
 
 if __name__=="__main__":
 

@@ -17,11 +17,11 @@ from fairscale.nn.model_parallel.initialize import (
     model_parallel_is_initialized,
 )
 
-
 from llama.model import ModelArgs, Transformer
 from llama.tokenizer import Tokenizer
 import config
 import torch.nn as nn
+from llama.generation import sample_top_p
 
 Role = Literal["system", "user", "assistant"]
 
@@ -128,13 +128,21 @@ class Llama(nn.Module):
         self,
         prompt_tokens: List[List[int]],
         prev_pos=0,
-        max_length=256
+        max_length=256,
+        top_p=0.9
     ):  
         pre_text=[]
         #目前这个方法还只适用于batchsize=1
         for i in range(max_length):
             logits = self.model(prompt_tokens, prev_pos)
-            pre_tokens=torch.argmax(torch.softmax(logits,dim=-1),dim=-1)
+
+            temperature=1
+            pre_tokens = torch.softmax(logits[:, -1] / temperature, dim=-1)
+
+            if(top_p>0):
+                pre_tokens = sample_top_p(pre_tokens, 0.5)
+            else:
+                pre_tokens=torch.argmax(pre_tokens,dim=-1).unsqueeze(0)
 
             last_token=pre_tokens[:,-1].item()
 

@@ -15,4 +15,13 @@
 上述以及是表现比较好的时候，但是依然出现错误，说明模型对于文档的理解还是不够，并且测试的时候有可能出现反复重复短语。  
   
 进一步的，收集了[NaturalConv](https://ai.tencent.com/ailab/nlp/dialogue/#datasets)数据集，训练模型日常聊天接话的能力（多对话）。  
-[pCLUE](https://github.com/CLUEbenchmark/pCLUE)数据集，
+[pCLUE](https://github.com/CLUEbenchmark/pCLUE)数据集，一个多任务数据集（单对话），涉及摘要，选择等具体项目。  
+
+在三个数据集上重新微调，然后在推理中加入top p增加随机性。  
+<img src="assert\chat_2.png" alt="图片说明" width=100%>
+<img src="assert\chat_3.png" alt="图片说明" width=100%>
+
+NaturalConv数据集增加了模型基本聊天能力，但是在pCLUE数据集上训练后表现不行，并且数据集中回答通常为固定短语，对模型影响较大。  
+
+下一步，收集一些能增强模型逻辑能力的数据集，如数学，情感，脑筋急转弯等试试，然后去看一下语言模型的评价指标有哪些，看看能达到什么水平。
+

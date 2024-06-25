@@ -58,7 +58,7 @@ def chat_epoch(model,dict_data):
 
         token=torch.tensor(reference_token+total_token, dtype=torch.long, device="cuda").unsqueeze(0)
 
-        pre_tokens=model.inference(token,prev_pos=0,max_length=256)
+        pre_tokens=model.inference(token,prev_pos=0,max_length=256,top_p=0.8)
 
 
         pre_text_list=[model.tokenizer.decode(pre_tokens[i]) for i in range(len(pre_tokens))]
@@ -91,8 +91,8 @@ if __name__=="__main__":
         max_seq_len=2048,
         max_batch_size=8,
     ).to(config.device)
-    model.load_state_dict(torch.load("weight/three_epoch_5.pt"))
 
+    model.load_state_dict(torch.load("weight/three_epoch_5.pt"))
 
     dict_data=dict()
 
