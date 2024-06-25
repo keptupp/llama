@@ -39,7 +39,8 @@ def chat_epoch(model,dict_data):
     # search_list=wikipedia.search(text)
     # print(search_list)
     # for index,one in enumerate(search_list[:3]):
-    reference+=wikipedia.summary(text,sentences=10)
+    if(len(text)!=0):
+        reference+=wikipedia.summary(text,sentences=10)
     reference=zhconv.convert(reference, 'zh-hans')
     print("资料：",len(reference),reference)
     reference_token=model.tokenizer.encode("资料:"+reference,bos=True,eos=True)
@@ -90,7 +91,7 @@ if __name__=="__main__":
         max_seq_len=2048,
         max_batch_size=8,
     ).to(config.device)
-    model.load_state_dict(torch.load("weight\epoch_10.pt"))
+    model.load_state_dict(torch.load("weight/three_epoch_5.pt"))
 
 
     dict_data=dict()

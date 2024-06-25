@@ -9,4 +9,10 @@
 基于这个预训练模型，我们收集了[RedGpt](https://github.com/DA-southampton/RedGPT)数据集作为对话的微调，其对话结构更改为：  
 {bos 资料：xxxx。n\n\人类：xxxxx。n\n\助手：xxxx。 eos n\n\人类：xxxxx。n\n\助手：xxxx。 eos}  
 按照此结构丢进模型进行训练。
-最终训练效果不错，在模型推理过程中，我们使用wikipedia库收集维基百科数据作为资料，然后在此基础上对模型进行提问。
+最终训练效果不错，在模型推理过程中，我们使用wikipedia库收集维基百科数据作为资料，然后在此基础上对模型进行提问。  
+如图：  
+<img src="assert\chat_1.png" alt="图片说明" width=100%>
+上述以及是表现比较好的时候，但是依然出现错误，说明模型对于文档的理解还是不够，并且测试的时候有可能出现反复重复短语。  
+  
+进一步的，收集了[NaturalConv](https://ai.tencent.com/ailab/nlp/dialogue/#datasets)数据集，训练模型日常聊天接话的能力（多对话）。  
+[pCLUE](https://github.com/CLUEbenchmark/pCLUE)数据集，
