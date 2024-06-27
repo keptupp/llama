@@ -91,8 +91,8 @@ class ChatDataset(Dataset):
         print("redgpt数据集")
         self.data_section+=read_NaturalConvJSON(text_path["naturalconv"],self.tokenizer)
         print("naturalconv数据集")
-        self.data_section+=read_pCLUEJSON(text_path["pclue"],self.tokenizer)
-        print("pclue数据集")
+        # self.data_section+=read_pCLUEJSON(text_path["pclue"],self.tokenizer)
+        # print("pclue数据集")
         
 
     def __getitem__(self, index):

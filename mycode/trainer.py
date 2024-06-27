@@ -80,7 +80,7 @@ if __name__=="__main__":
         max_seq_len=2048,
         max_batch_size=8,
     ).to(config.device)
-    model.load_state_dict(torch.load("weight/pre_train/chat_epoch_10.pt"))
+    model.load_state_dict(torch.load("weight/pre_train/pretrain.pt"))
 
     # pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=256)
     # pre_dataloader=DataLoader(pre_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
@@ -88,10 +88,6 @@ if __name__=="__main__":
     data_text=dict()
     data_text["redgpt"]=r"/home/liuzheng/Data/RedGPT-Dataset-V1-CN.json"
     data_text["naturalconv"]=r"/home/liuzheng/Data/NaturalConv.json"
-    data_text["pclue"]=[
-        r"/home/liuzheng/Data/pCLUE/pCLUE_train_1.json",
-        # r"/home/liuzheng/Data/pCLUE/pCLUE_train_2.json",
-    ]
     chat_dataset=ChatDataset(data_text,r"weight/tokenizer.model",min_len=32,max_len=2048)
     chat_dataloader=DataLoader(chat_dataset,batch_size=4,shuffle=True,collate_fn=my_collate_fn)
 
