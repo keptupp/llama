@@ -34,6 +34,8 @@ def train_epoch(model,dict_data):
     global nums
     bar=tqdm(dict_data["pretraindataloader"],ncols=100)
 
+    total_loss=0
+
     for before,after in bar:
         dict_data["optimizer"].zero_grad()
 
@@ -53,17 +55,20 @@ def train_epoch(model,dict_data):
         dict_data["optimizer"].step()
         dict_data["scheduler"].step()
 
+        total_loss+=loss.item()
         bar.set_postfix(loss=loss.item())
 
         nums+=1
         if nums%16==0:
             dict_data["writer"].add_scalar('Loss/train', nums,loss.item())
 
-
+    print("平均损失",total_loss/len(dict_data["pretraindataloader"]))
 
 def train(model,dict_data):
 
     for epoch in range(1,dict_data["epoch"]+1):
+        print()
+        print("epoch",epoch)
         train_epoch(model,dict_data)
 
         torch.save(model.state_dict(),"weight/pre_train/epoch_"+str(epoch)+".pt")
