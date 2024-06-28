@@ -42,4 +42,9 @@ $$\text { Train PPL }=\exp \left(-\frac{1}{N} \sum_{i=1}^{N} \log P\left(w_{i}\r
 小模型就主要侧重逻辑推理能力和基本的对话，至于模型的知识，只能依靠检索的方式。  
 暂定评价模型的数学，阅读理解和尝试推理。
 
-[BelleGroup0.5M](https://github.com/LianjiaTech/BELLE/tree/main/data/1.5M)数据集，由ChatGpt生成的数据集。
+
+[BelleGroup0.5M](https://github.com/LianjiaTech/BELLE/tree/main/data/1.5M)数据集，由ChatGpt生成的数据集。  
+[deepctrl-sft-data](https://modelscope.cn/datasets/deepctrl/deepctrl-sft-data/files)10M条数据的中文数据，50类任务。
+
+添加了评价指标精度和困惑度  
+现在尝试使用维基百科的数据预训练，

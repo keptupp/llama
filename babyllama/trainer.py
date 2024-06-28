@@ -28,6 +28,21 @@ def my_collate_fn(batch):
 
     return padding_before_token,padding_after_token
 
+@torch.no_grad()
+def val(model,dict_data):
+    total_loss=0
+    if dict_data["valdataloader"] is not None:
+        bar=tqdm(dict_data["valdataloader"],ncols=100)
+        for before,after in bar:
+            pre_tokens=model(before,0)
+            pre_tokens=pre_tokens.permute(0,2,1)
+
+            loss=dict_data["crossentropyloss"](pre_tokens,after)
+            bar.set_postfix(loss=loss.item())
+            total_loss+=loss.item()
+        print("平均损失",total_loss/len(dict_data["valdataloader"]))
+    else:
+        return None
 
 nums=0
 def train_epoch(model,dict_data):
@@ -39,7 +54,8 @@ def train_epoch(model,dict_data):
     for before,after in bar:
         dict_data["optimizer"].zero_grad()
 
-        start_pos=np.random.randint(32)
+        # start_pos=np.random.randint(32)
+        start_pos=0
         pre_tokens=model(before,start_pos)
 
         pre_tokens=pre_tokens.permute(0,2,1)
