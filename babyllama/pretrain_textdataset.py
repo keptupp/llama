@@ -29,6 +29,10 @@ class PreTrainDataset(Dataset):
     def __len__(self):
         return len(self.data_section)
     
+class WikiDataset(Dataset):
+    def __init__(self,text_path,tokenizer_path,min_len,max_len):
+        print(12)
+    
 
 if __name__=="__main__":
     pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32)

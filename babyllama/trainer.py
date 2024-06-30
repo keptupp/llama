@@ -11,6 +11,7 @@ from tqdm import tqdm
 import config
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
+from tools.metric import Metric
 
 def my_collate_fn(batch):
     max_lenght=max([one[0].shape[0] for one in batch])
@@ -29,20 +30,23 @@ def my_collate_fn(batch):
     return padding_before_token,padding_after_token
 
 @torch.no_grad()
-def val(model,dict_data):
+def val_epoch(model,dict_data):
     total_loss=0
-    if dict_data["valdataloader"] is not None:
-        bar=tqdm(dict_data["valdataloader"],ncols=100)
-        for before,after in bar:
-            pre_tokens=model(before,0)
-            pre_tokens=pre_tokens.permute(0,2,1)
 
-            loss=dict_data["crossentropyloss"](pre_tokens,after)
-            bar.set_postfix(loss=loss.item())
-            total_loss+=loss.item()
-        print("平均损失",total_loss/len(dict_data["valdataloader"]))
-    else:
-        return None
+    bar=tqdm(dict_data["valdataloader"],ncols=100)
+    for before,after in bar:
+        pre_tokens=model(before,0)
+        pre_tokens=pre_tokens.permute(0,2,1)
+        loss=dict_data["crossentropyloss"](pre_tokens,after)
+        mask=(after!=0).float()
+        loss=(loss*mask).sum()/mask.sum()
+
+        data_text["metric"].update_acc(pre_tokens,after)
+
+        bar.set_postfix(loss=loss.item())
+        total_loss+=loss.item()
+    print("平均损失",total_loss/len(dict_data["valdataloader"]),"精确度acc",data_text["metric"].get_acc())
+
 
 nums=0
 def train_epoch(model,dict_data):
@@ -60,7 +64,6 @@ def train_epoch(model,dict_data):
 
         pre_tokens=pre_tokens.permute(0,2,1)
 
-
         loss=dict_data["crossentropyloss"](pre_tokens,after)
 
         mask=(after!=0).float()
@@ -75,8 +78,11 @@ def train_epoch(model,dict_data):
         bar.set_postfix(loss=loss.item())
 
         nums+=1
-        if nums%16==0:
-            dict_data["writer"].add_scalar('Loss/train', nums,loss.item())
+        if nums%1e2==0:
+            dict_data["writer"].add_scalar('Train_Loss',loss.item(),nums)
+
+            ppl=data_text["metric"].get_ppl(pre_tokens,after)
+            dict_data["writer"].add_scalar('Train_PPL',ppl,nums)
 
     print("平均损失",total_loss/len(dict_data["pretraindataloader"]))
 
@@ -85,9 +91,11 @@ def train(model,dict_data):
     for epoch in range(1,dict_data["epoch"]+1):
         print()
         print("epoch",epoch)
-        train_epoch(model,dict_data)
+        # train_epoch(model,dict_data)
 
-        torch.save(model.state_dict(),"weight/pre_train/epoch_"+str(epoch)+".pt")
+        val_epoch(model,dict_data)
+
+        # torch.save(model.state_dict(),"weight/pre_train/epoch_"+str(epoch)+".pt")
         
 
 if __name__=="__main__":
@@ -96,12 +104,13 @@ if __name__=="__main__":
         max_seq_len=2048,
         max_batch_size=8,
     ).to(config.device)
-    model.load_state_dict(torch.load("weight/pre_train/pretrain.pt"))
+    model.load_state_dict(torch.load("weight/pre_train/epoch_10.pt"))
 
     # pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=256)
     # pre_dataloader=DataLoader(pre_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
 
     data_text=dict()
+    data_text["metric"]=Metric()
     data_text["redgpt"]=r"/home/liuzheng/Data/RedGPT-Dataset-V1-CN.json"
     data_text["naturalconv"]=r"/home/liuzheng/Data/NaturalConv.json"
     chat_dataset=ChatDataset(data_text,r"weight/tokenizer.model",min_len=32,max_len=2048)
@@ -109,6 +118,7 @@ if __name__=="__main__":
 
     dict_data=dict()
     dict_data["pretraindataloader"]=chat_dataloader
+    dict_data["valdataloader"]=chat_dataloader
     dict_data["crossentropyloss"]=nn.CrossEntropyLoss(reduction='none')
 
     dict_data["epoch"]=10
