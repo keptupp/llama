@@ -122,9 +122,9 @@ class ChatDataset(Dataset):
         self.tokenizer=Tokenizer(tokenizer_path)
         self.max_len=max_len
 
-        # self.data_section+=read_REDGPTJSON(text_path["redgpt"],self.tokenizer)
+        self.data_section+=read_REDGPTJSON(text_path["redgpt"],self.tokenizer)
         
-        self.data_section+=read_NaturalConvJSON(text_path["naturalconv"],self.tokenizer)
+        # self.data_section+=read_NaturalConvJSON(text_path["naturalconv"],self.tokenizer)
 
         # self.data_section+=read_pCLUEJSON(text_path["pclue"],self.tokenizer)
         
