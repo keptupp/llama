@@ -1,7 +1,7 @@
 import sys,os
 sys.path.append(os.getcwd())
 from llama_class import Llama, Dialog
-from pretrain_textdataset import PreTrainDataset
+from pretrain_textdataset import PreTrainDataset,WikiDataset
 from chat_dataset import ChatDataset
 from torch.utils.data import Dataset,DataLoader
 import torch
@@ -15,7 +15,6 @@ from tools.metric import Metric
 
 def my_collate_fn(batch):
     max_lenght=max([one[0].shape[0] for one in batch])
-    # max_lenght=2048
 
     padding_before_token=None
     padding_after_token=None
@@ -41,11 +40,12 @@ def val_epoch(model,dict_data):
         mask=(after!=0).float()
         loss=(loss*mask).sum()/mask.sum()
 
-        data_text["metric"].update_acc(pre_tokens,after)
+        dict_data["metric"].update_acc(pre_tokens,after)
 
-        bar.set_postfix(loss=loss.item())
+        bar.set_postfix(loss=loss.item(),acc=dict_data["metric"].get_acc())
         total_loss+=loss.item()
-    print("平均损失",total_loss/len(dict_data["valdataloader"]),"精确度acc",data_text["metric"].get_acc())
+        
+    print("平均损失",total_loss/len(dict_data["valdataloader"]),"精确度acc",dict_data["metric"].get_acc())
 
 
 nums=0
@@ -80,9 +80,14 @@ def train_epoch(model,dict_data):
         nums+=1
         if nums%1e2==0:
             dict_data["writer"].add_scalar('Train_Loss',loss.item(),nums)
+            dict_data["metric"].update_acc(pre_tokens,after)
+            acc=dict_data["metric"].get_acc()
 
-            ppl=data_text["metric"].get_ppl(pre_tokens,after)
+            ppl=dict_data["metric"].get_ppl(pre_tokens,after)
             dict_data["writer"].add_scalar('Train_PPL',ppl,nums)
+            dict_data["writer"].add_scalar('Train_Acc',acc,nums)
+        # if nums%1e4==0:
+        #     torch.save(model.state_dict(),"weight/pre_train/pretrain_wiki.pt")
 
     print("平均损失",total_loss/len(dict_data["pretraindataloader"]))
 
@@ -91,11 +96,11 @@ def train(model,dict_data):
     for epoch in range(1,dict_data["epoch"]+1):
         print()
         print("epoch",epoch)
-        # train_epoch(model,dict_data)
+        train_epoch(model,dict_data)
 
         val_epoch(model,dict_data)
 
-        # torch.save(model.state_dict(),"weight/pre_train/epoch_"+str(epoch)+".pt")
+        torch.save(model.state_dict(),"weight/pre_train/epoch_"+str(epoch)+".pt")
         
 
 if __name__=="__main__":
@@ -104,27 +109,30 @@ if __name__=="__main__":
         max_seq_len=2048,
         max_batch_size=8,
     ).to(config.device)
-    model.load_state_dict(torch.load("weight/pre_train/epoch_10.pt"))
+    model.load_state_dict(torch.load("weight/pre_train/pretrain_wiki_1_epoch.pt"))
 
     # pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=256)
     # pre_dataloader=DataLoader(pre_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
 
     data_text=dict()
-    data_text["metric"]=Metric()
     data_text["redgpt"]=r"/home/liuzheng/Data/RedGPT-Dataset-V1-CN.json"
     data_text["naturalconv"]=r"/home/liuzheng/Data/NaturalConv.json"
     chat_dataset=ChatDataset(data_text,r"weight/tokenizer.model",min_len=32,max_len=2048)
     chat_dataloader=DataLoader(chat_dataset,batch_size=4,shuffle=True,collate_fn=my_collate_fn)
 
+    # wiki_dataset=WikiDataset(r"/home/liuzheng/Data/wiki_zh_2019/wiki_zh",r"weight/tokenizer.model",32,256)
+    # wiki_dataloader=DataLoader(wiki_dataset,batch_size=64,shuffle=True,collate_fn=my_collate_fn)
+
     dict_data=dict()
+    dict_data["metric"]=Metric()
     dict_data["pretraindataloader"]=chat_dataloader
     dict_data["valdataloader"]=chat_dataloader
     dict_data["crossentropyloss"]=nn.CrossEntropyLoss(reduction='none')
 
-    dict_data["epoch"]=10
-    dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=1e-3)
+    dict_data["epoch"]=2
+    dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=5e-4)
     dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(chat_dataloader),eta_min=1e-4)
-    dict_data["writer"] = SummaryWriter('weight/log_tensorboard')
+    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step3_finetune_redgpt')
 
 
     train(model,dict_data)

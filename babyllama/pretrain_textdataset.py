@@ -41,8 +41,9 @@ class WikiDataset(Dataset):
 
         self.text_data=[]
 
-        # self.total_data=0
+        self.total_data=0
         self.min_len=min_len
+        self.max_len=max_len
         
 
     def get_new_data(self):
@@ -57,6 +58,9 @@ class WikiDataset(Dataset):
                 text_list=[one for one in text_list if len(one)>self.min_len]
                 self.text_data+=text_list
 
+        # self.total_data+=len(self.text_data)
+        # print(len(self.text_data),self.total_data)
+
     def __getitem__(self, index):
         if(self.read_index_text>=len(self.text_data)):
             self.get_new_data()
@@ -64,12 +68,13 @@ class WikiDataset(Dataset):
 
         text=self.text_data[self.read_index_text]
         self.read_index_text+=1
-        token=self.tokenizer.encode(text,bos=True,eos=True)
+        token=self.tokenizer.encode(text,bos=True,eos=True)[:self.max_len]
         token=torch.tensor(token, dtype=torch.long, device="cuda")
         return token[:-1].detach().clone(),token[1:].detach().clone()
 
     def __len__(self):
-        return 10000000
+        return 3300000
+                
 
     def get_filelist(self,dir_path, file_list=[]):
         if os.path.isfile(dir_path):
@@ -87,7 +92,7 @@ if __name__=="__main__":
     # for token in pre_dataloader:
     #     print(token)
 
-    wiki_dataset=WikiDataset(r"D:\work\Datasets\wiki_zh_2019\wiki_zh",r"weight\tokenizer.model",32,512)
+    wiki_dataset=WikiDataset(r"/home/liuzheng/Data/wiki_zh_2019/wiki_zh",r"weight/tokenizer.model",32,256)
 
     for wiki_dataset in wiki_dataset:
         pass

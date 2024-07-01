@@ -48,3 +48,6 @@ $$\text { Train PPL }=\exp \left(-\frac{1}{N} \sum_{i=1}^{N} \log P\left(w_{i}\r
 
 添加了评价指标精度和困惑度  
 现在尝试使用维基百科的数据预训练，然后在RedGpt、NaturalConv和BelleGroup0.5M上微调，也可以尝试在deepctrl-sft-data上微调。
+
+在wiki语料上预训练的情况如下图所示  
+<img src="assert\chat_2.png" alt="图片说明" width=100%>
