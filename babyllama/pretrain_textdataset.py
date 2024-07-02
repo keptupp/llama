@@ -49,6 +49,9 @@ class WikiDataset(Dataset):
     def get_new_data(self):
         self.text_data.clear()
         self.read_index_flie+=1
+        if(self.read_index_flie>=len(self.file_list)):#说明已经到头了，得重置index开始重新训练数据集了
+            self.read_index_flie=0
+
         with open(self.file_list[self.read_index_flie], "r",encoding="utf-8") as fileHandler:
             while True:
                 line = fileHandler.readline()

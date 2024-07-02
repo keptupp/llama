@@ -72,7 +72,7 @@ def train_epoch(model,dict_data):
         loss.backward()
 
         dict_data["optimizer"].step()
-        dict_data["scheduler"].step()
+        # dict_data["scheduler"].step()
 
         total_loss+=loss.item()
         bar.set_postfix(loss=loss.item())
@@ -96,11 +96,11 @@ def train(model,dict_data):
     for epoch in range(1,dict_data["epoch"]+1):
         print()
         print("epoch",epoch)
-        train_epoch(model,dict_data)
+        # train_epoch(model,dict_data)
 
         val_epoch(model,dict_data)
 
-        torch.save(model.state_dict(),"weight/pre_train/epoch_"+str(epoch)+".pt")
+        # torch.save(model.state_dict(),"weight/pre_train/epoch_"+str(epoch)+".pt")
         
 
 if __name__=="__main__":
@@ -109,7 +109,7 @@ if __name__=="__main__":
         max_seq_len=2048,
         max_batch_size=8,
     ).to(config.device)
-    model.load_state_dict(torch.load("weight/pre_train/pretrain_wiki_1_epoch.pt"))
+    model.load_state_dict(torch.load("weight/pre_train/epoch_1.pt"))
 
     # pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=256)
     # pre_dataloader=DataLoader(pre_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
@@ -121,7 +121,7 @@ if __name__=="__main__":
     chat_dataloader=DataLoader(chat_dataset,batch_size=4,shuffle=True,collate_fn=my_collate_fn)
 
     # wiki_dataset=WikiDataset(r"/home/liuzheng/Data/wiki_zh_2019/wiki_zh",r"weight/tokenizer.model",32,256)
-    # wiki_dataloader=DataLoader(wiki_dataset,batch_size=64,shuffle=True,collate_fn=my_collate_fn)
+    # wiki_dataloader=DataLoader(wiki_dataset,batch_size=32,shuffle=True,collate_fn=my_collate_fn)
 
     dict_data=dict()
     dict_data["metric"]=Metric()
@@ -129,10 +129,10 @@ if __name__=="__main__":
     dict_data["valdataloader"]=chat_dataloader
     dict_data["crossentropyloss"]=nn.CrossEntropyLoss(reduction='none')
 
-    dict_data["epoch"]=2
-    dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=5e-4)
+    dict_data["epoch"]=1
+    dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=1e-3)
     dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(chat_dataloader),eta_min=1e-4)
-    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step3_finetune_redgpt')
+    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step3_finetune_redgpt_fix')
 
 
     train(model,dict_data)

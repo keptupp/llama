@@ -17,7 +17,7 @@
 进一步的，收集了[NaturalConv](https://ai.tencent.com/ailab/nlp/dialogue/#datasets)数据集，训练模型日常聊天接话的能力（多对话）。  
 [pCLUE](https://github.com/CLUEbenchmark/pCLUE)数据集，一个多任务数据集（单对话），涉及摘要，选择等具体项目。  
 
-在三个数据集上重新微调，然后在推理中加入top p增加随机性，发现模型倾向于重复说话，怀疑pCLUE所占比重太大且为单对话，回答内容没有参考，强行让模型模型记一些知识，虽然能处理一些多任务，但回答基本是错误的。  
+在三个数据集上重新微调epoch10的时候精度57.64%，然后在推理中加入top p增加随机性，发现模型倾向于重复说话，怀疑pCLUE所占比重太大且为单对话，回答内容没有参考，强行让模型模型记一些知识，虽然能处理一些多任务，但回答基本是错误的。  
 <img src="assert\chat_2.png" alt="图片说明" width=100%>
 <img src="assert\chat_3.png" alt="图片说明" width=100%>
 
@@ -49,9 +49,10 @@ $$\text { Train PPL }=\exp \left(-\frac{1}{N} \sum_{i=1}^{N} \log P\left(w_{i}\r
 添加了评价指标精度和困惑度  
 现在尝试使用维基百科的数据预训练，然后在RedGpt、NaturalConv和BelleGroup0.5M上微调，也可以尝试在deepctrl-sft-data上微调。
 
-在wiki语料上预训练的情况如下图所示，只跑一个epoch的效果，大约花了7个小时  
+在wiki语料上预训练的情况如下图所示，只跑1个epoch的效果，大约花了7个小时，训练效果没有达到预期，模型还没完全学习到wiki中的知识，后续再加几个epoch   
 <img src="assert\pre_train_1.png" alt="图片说明" width=100%>
 <img src="assert\pre_train_2.png" alt="图片说明" width=100%>
 <img src="assert\pre_train_3.png" alt="图片说明" width=100%>
+后续一个epoch
   
-下面尝试在redgpt数据集上微调
+下面尝试在redgpt数据集上微调 3epoch精度57.8%
