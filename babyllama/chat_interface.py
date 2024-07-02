@@ -92,7 +92,7 @@ if __name__=="__main__":
         max_batch_size=8,
     ).to(config.device)
 
-    model.load_state_dict(torch.load("weight/pre_train/pretrain_wiki_1_epoch.pt"))
+    model.load_state_dict(torch.load("weight/pre_train/epoch_3.pt"))
 
     dict_data=dict()
 
@@ -101,5 +101,5 @@ if __name__=="__main__":
     # print(wikipedia.search("减肥"))
 
 
-    # chat_epoch(model,dict_data)
-    shell_epoch(model,dict_data)
+    chat_epoch(model,dict_data)
+    # shell_epoch(model,dict_data)
