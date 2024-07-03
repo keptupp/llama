@@ -59,4 +59,13 @@ $$\text { Train PPL }=\exp \left(-\frac{1}{N} \sum_{i=1}^{N} \log P\left(w_{i}\r
 <img src="assert\pre_train_6.png" alt="图片说明" width=100%>
   
 下面尝试在redgpt数据集上微调 3 epoch精度57.8%，看起来模型说话的长度变多了，倾向于多介绍一些具体信息。
-在BelleGroup0.5M上微调 3 epoch精度60.2%
+在BelleGroup0.5M上微调 3 epoch精度60.2%，可以处理一些简单的多任务，如讲一个笑话，取标题，编写文章等，但是没有连续对话的能力。
+<img src="assert\chat_4.png" alt="图片说明" width=100%>
+<img src="assert\chat_5.png" alt="图片说明" width=100%>
+<img src="assert\chat_6.png" alt="图片说明" width=100%>
+
+后续计划
+接下来尝试微调deepctrl-sft-data，这个数据集跟我预训练的数据集大小有得一拼，囊括了BelleGroup数据集。  
+后续尝试结合上述数据集，平衡一下数据比例微调。  
+使用lora的微调方法看看  
+找一个vqa数据集，尝试接入efficientvit网络（后续看看怎么特征融合）做多模态

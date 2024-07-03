@@ -167,6 +167,46 @@ class BigChatDataset(Dataset):
     def __len__(self):
         return 519255
 
+#一个sft的大语料数据集
+class DeepctrlDataset(Dataset):
+    def __init__(self,text_path,tokenizer_path,max_len):
+        
+        self.text_path=text_path
+        self.tokenizer=Tokenizer(tokenizer_path)
+        self.iter_data=self.read_next_line(text_path)
+
+        self.max_len=max_len
+
+
+    def read_next_line(self,file_path):
+        with open(file_path, "r" , encoding="utf-8") as file:
+            for line in file:
+                yield json.loads(line)
+
+    def __getitem__(self, index):
+        # if index==519255-1:
+        #     self.iter_data=self.read_next_line(self.text_path)
+        json_data=next(self.iter_data)
+
+
+        chat_token=self.tokenizer.encode("资料: ",bos=True,eos=True)
+        for one in json_data["history"]:
+            chat_token+=self.tokenizer.encode("\n\n人类: "+one[0],bos=False,eos=False)
+            chat_token+=self.tokenizer.encode("\n\n助手: "+one[1],bos=False,eos=False)
+
+        chat_token+=self.tokenizer.encode("\n\n人类: "+json_data["input"],bos=False,eos=False)
+        chat_token+=self.tokenizer.encode("\n\n助手: "+json_data["output"],bos=False,eos=True)
+
+        if(len(chat_token)>self.max_len):
+            chat_token=(chat_token[:self.max_len-1]+[3])
+
+        token=torch.tensor(chat_token, dtype=torch.long, device="cuda")
+        return token[:-1].detach().clone(),token[1:].detach().clone()
+
+    def __len__(self):
+        return 10*1e6
+
+
 if __name__=="__main__":
 
 
@@ -194,6 +234,11 @@ if __name__=="__main__":
     # read_SFT_json(text_path,tokenizer)
 
 
-    bigdataset=BigChatDataset(r"/home/liuzheng/Data/Belle_open_source_0.5M.json",r"weight/tokenizer.model",512)
-    for i,j in bigdataset:
-        pass
+    # bigdataset=BigChatDataset(r"/home/liuzheng/Data/Belle_open_source_0.5M.json",r"weight/tokenizer.model",512)
+    # for i,j in bigdataset:
+    #     pass
+
+    deepctrldataset=DeepctrlDataset(r"D:\work\Datasets\sft_data_zh.jsonl",r"weight/tokenizer.model",512)
+    for a,one in deepctrldataset:
+        print("++++++++++++++++++++++++++++++++++")
+        print(tokenizer.decode(one.tolist()))
