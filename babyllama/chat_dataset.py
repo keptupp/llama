@@ -7,6 +7,7 @@ import pandas as pd
 from llama.tokenizer import Tokenizer
 import config
 from tqdm import tqdm
+import json
 
 def read_REDGPTJSON(text_path,tokenizer):
     data=pd.read_json(text_path,lines=True)
@@ -123,11 +124,7 @@ class ChatDataset(Dataset):
         self.max_len=max_len
 
         self.data_section+=read_REDGPTJSON(text_path["redgpt"],self.tokenizer)
-        
-        # self.data_section+=read_NaturalConvJSON(text_path["naturalconv"],self.tokenizer)
-
-        # self.data_section+=read_pCLUEJSON(text_path["pclue"],self.tokenizer)
-        
+            
 
     def __getitem__(self, index):
         chat_token=self.data_section[index]
@@ -139,11 +136,42 @@ class ChatDataset(Dataset):
     def __len__(self):
         return len(self.data_section)
 
+#用于处理大数据量的文件，SFT
+class BigChatDataset(Dataset):
+    def __init__(self,text_path,tokenizer_path,max_len):
+        
+        self.text_path=text_path
+        self.tokenizer=Tokenizer(tokenizer_path)
+        self.iter_data=self.read_next_line(text_path)
+
+        self.max_len=max_len
+
+    def read_next_line(self,file_path):
+        with open(file_path, "r") as file:
+            for line in file:
+                yield json.loads(line)
+
+    def __getitem__(self, index):
+        if index==519255-1:
+            self.iter_data=self.read_next_line(self.text_path)
+        json_data=next(self.iter_data)
+
+        chat_token=self.tokenizer.encode("资料: ",bos=True,eos=True)
+        chat_token+=self.tokenizer.encode("\n\n人类: "+json_data['instruction'],bos=False,eos=False)
+        chat_token+=self.tokenizer.encode("\n\n助手: "+json_data['output'],bos=False,eos=True)
+        if(len(chat_token)>self.max_len):
+            chat_token=(chat_token[:self.max_len-1]+[3])
+        token=torch.tensor(chat_token, dtype=torch.long, device="cuda")
+        return token[:-1].detach().clone(),token[1:].detach().clone()
+
+    def __len__(self):
+        return 519255
+
 if __name__=="__main__":
 
 
 
-    tokenizer=Tokenizer("weight/tokenizer_chinese.model")
+    tokenizer=Tokenizer("weight/tokenizer.model")
 
 
     # read_REDGPTJSON(r"D:\work\Datasets\RedGPT-Dataset-V1-CN\RedGPT-Dataset-V1-CN.json",tokenizer)
@@ -162,5 +190,10 @@ if __name__=="__main__":
     # text_path=r"D:\work\Datasets\Belle_open_source_0.5M.json"
     # read_BelleGroup(text_path,tokenizer)
 
-    text_path=r"D:\work\Datasets\sft_data_zh.jsonl"
-    read_SFT_json(text_path,tokenizer)
+    # text_path=r"D:\work\Datasets\sft_data_zh.jsonl"
+    # read_SFT_json(text_path,tokenizer)
+
+
+    bigdataset=BigChatDataset(r"/home/liuzheng/Data/Belle_open_source_0.5M.json",r"weight/tokenizer.model",512)
+    for i,j in bigdataset:
+        pass

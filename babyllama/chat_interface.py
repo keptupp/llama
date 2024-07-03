@@ -36,9 +36,7 @@ def chat_epoch(model,dict_data):
     reference=""
     text=input("资料：")
     wikipedia.set_lang("zh")
-    # search_list=wikipedia.search(text)
-    # print(search_list)
-    # for index,one in enumerate(search_list[:3]):
+
     if(len(text)!=0):
         reference+=wikipedia.summary(text,sentences=10)
     reference=zhconv.convert(reference, 'zh-hans')
@@ -51,7 +49,7 @@ def chat_epoch(model,dict_data):
         text=input("人类: ")
 
         if first:#第一次对话，搜索资料
-            total_token=total_token+model.tokenizer.encode("人类: "+text+"\n\n助手: ",bos=False,eos=False)
+            total_token=total_token+model.tokenizer.encode("\n\n人类: "+text+"\n\n助手: ",bos=False,eos=False)
             first=False
         else:
             total_token=total_token+model.tokenizer.encode("\n\n人类: "+text+"\n\n助手: ",bos=False,eos=False)
