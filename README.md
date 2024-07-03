@@ -54,5 +54,9 @@ $$\text { Train PPL }=\exp \left(-\frac{1}{N} \sum_{i=1}^{N} \log P\left(w_{i}\r
 <img src="assert\pre_train_2.png" alt="图片说明" width=100%>
 <img src="assert\pre_train_3.png" alt="图片说明" width=100%>
 后续一个epoch
+<img src="assert\pre_train_4.png" alt="图片说明" width=100%>
+<img src="assert\pre_train_5.png" alt="图片说明" width=100%>
+<img src="assert\pre_train_6.png" alt="图片说明" width=100%>
   
-下面尝试在redgpt数据集上微调 3epoch精度57.8%
+下面尝试在redgpt数据集上微调 3 epoch精度57.8%，看起来模型说话的长度变多了，倾向于多介绍一些具体信息。
+在BelleGroup0.5M上微调 3 epoch精度60.2%
