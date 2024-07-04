@@ -188,32 +188,23 @@ class DeepctrlDataset(Dataset):
         return json_data
 
     def read_next_line(self,file_path):
-        try:
-            with open(file_path, "r" , encoding="utf-8") as file:
-                for line in file:
-                    yield line
-        except Exception as e:
-            print(f"Error reading file: {e}")
-            
-                
-    def __getitem__(self, index):        
+        with open(file_path, "r" , encoding="utf-8") as file:
+            for line in file:
+                yield json.loads(line)
 
-        text_data=next(self.iter_data)
-        json_data=self.strtojson(text_data)
-        if json_data=="":
-            self.nums+=1
-            print("错误",self.nums,text_data)
-        else:
-            pass
-        return 1,2
+    def __getitem__(self, index):
+        # if index==519255-1:
+        #     self.iter_data=self.read_next_line(self.text_path)
+        json_data=next(self.iter_data)
 
-        # chat_token=self.tokenizer.encode("资料: ",bos=True,eos=True)
-        # for one in json_data["history"]:
-        #     chat_token+=self.tokenizer.encode("\n\n人类: "+one[0],bos=False,eos=False)
-        #     chat_token+=self.tokenizer.encode("\n\n助手: "+one[1],bos=False,eos=False)
 
-        # chat_token+=self.tokenizer.encode("\n\n人类: "+json_data["input"],bos=False,eos=False)
-        # chat_token+=self.tokenizer.encode("\n\n助手: "+json_data["output"],bos=False,eos=True)
+        chat_token=self.tokenizer.encode("资料: ",bos=True,eos=True)
+        for one in json_data["history"]:
+            chat_token+=self.tokenizer.encode("\n\n人类: "+one[0],bos=False,eos=False)
+            chat_token+=self.tokenizer.encode("\n\n助手: "+one[1],bos=False,eos=False)
+
+        chat_token+=self.tokenizer.encode("人类："+json_data["input"],bos=False,eos=False)
+        chat_token+=self.tokenizer.encode("助手："+json_data["output"],bos=False,eos=True)
 
         # if(len(chat_token)>self.max_len):
         #     chat_token=(chat_token[:self.max_len-1]+[3])
