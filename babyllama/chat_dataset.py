@@ -176,32 +176,50 @@ class DeepctrlDataset(Dataset):
         self.iter_data=self.read_next_line(text_path)
 
         self.max_len=max_len
+        self.nums=0
 
+    def strtojson(self,s):
+        json_data=""
+        try:
+            json_data=json.loads(s)
+        except json.JSONDecodeError:
+            pass
+
+        return json_data
 
     def read_next_line(self,file_path):
-        with open(file_path, "r" , encoding="utf-8") as file:
-            for line in file:
-                yield json.loads(line)
+        try:
+            with open(file_path, "r" , encoding="utf-8") as file:
+                for line in file:
+                    yield line
+        except Exception as e:
+            print(f"Error reading file: {e}")
+            
+                
+    def __getitem__(self, index):        
 
-    def __getitem__(self, index):
-        # if index==519255-1:
-        #     self.iter_data=self.read_next_line(self.text_path)
-        json_data=next(self.iter_data)
+        text_data=next(self.iter_data)
+        json_data=self.strtojson(text_data)
+        if json_data=="":
+            self.nums+=1
+            print("错误",self.nums,text_data)
+        else:
+            pass
+        return 1,2
 
+        # chat_token=self.tokenizer.encode("资料: ",bos=True,eos=True)
+        # for one in json_data["history"]:
+        #     chat_token+=self.tokenizer.encode("\n\n人类: "+one[0],bos=False,eos=False)
+        #     chat_token+=self.tokenizer.encode("\n\n助手: "+one[1],bos=False,eos=False)
 
-        chat_token=self.tokenizer.encode("资料: ",bos=True,eos=True)
-        for one in json_data["history"]:
-            chat_token+=self.tokenizer.encode("\n\n人类: "+one[0],bos=False,eos=False)
-            chat_token+=self.tokenizer.encode("\n\n助手: "+one[1],bos=False,eos=False)
+        # chat_token+=self.tokenizer.encode("\n\n人类: "+json_data["input"],bos=False,eos=False)
+        # chat_token+=self.tokenizer.encode("\n\n助手: "+json_data["output"],bos=False,eos=True)
 
-        chat_token+=self.tokenizer.encode("\n\n人类: "+json_data["input"],bos=False,eos=False)
-        chat_token+=self.tokenizer.encode("\n\n助手: "+json_data["output"],bos=False,eos=True)
+        # if(len(chat_token)>self.max_len):
+        #     chat_token=(chat_token[:self.max_len-1]+[3])
 
-        if(len(chat_token)>self.max_len):
-            chat_token=(chat_token[:self.max_len-1]+[3])
-
-        token=torch.tensor(chat_token, dtype=torch.long, device="cuda")
-        return token[:-1].detach().clone(),token[1:].detach().clone()
+        # token=torch.tensor(chat_token, dtype=torch.long, device="cuda")
+        # return token[:-1].detach().clone(),token[1:].detach().clone()
 
     def __len__(self):
         return int(10*1e6)
@@ -238,7 +256,8 @@ if __name__=="__main__":
     # for i,j in bigdataset:
     #     pass
 
-    deepctrldataset=DeepctrlDataset(r"D:\work\Datasets\sft_data_zh.jsonl",r"weight/tokenizer.model",512)
-    for a,one in deepctrldataset:
-        print("++++++++++++++++++++++++++++++++++")
-        print(tokenizer.decode(one.tolist()))
+    deepctrldataset=DeepctrlDataset(r"/home/liuzheng/Data/sft_data_zh.jsonl",r"weight/tokenizer.model",512)
+    for a,one in tqdm(deepctrldataset):
+        # print("++++++++++++++++++++++++++++++++++")
+        # print(tokenizer.decode(one.tolist()))
+        pass
