@@ -65,7 +65,7 @@ $$\text { Train PPL }=\exp \left(-\frac{1}{N} \sum_{i=1}^{N} \log P\left(w_{i}\r
 <img src="assert\chat_6.png" alt="图片说明" width=100%>
 
 后续计划
-接下来尝试微调deepctrl-sft-data，这个数据集跟我预训练的数据集大小有得一拼，囊括了BelleGroup数据集。  
+接下来尝试微调deepctrl-sft-data，这个数据集跟我预训练的数据集大小有得一拼(实际上预训练的wiki数据集训练7个小时，这个数据集训练50个小时)，囊括了BelleGroup数据集。但是发现这个数据集虽然大一些，但是相对好学一些，因为在wiki上2个epoch的acc才37%左右，在此基础上stf训练acc初始阶段就可以上到40%。
 后续尝试结合上述数据集，平衡一下数据比例微调。  
-使用lora的微调方法看看  
-找一个vqa数据集，尝试接入efficientvit网络（后续看看怎么特征融合）做多模态
+使用lora的微调方法看看效果。  
+找一个vqa数据集，尝试接入efficientvit网络（后续看看怎么特征融合）做多模态.

@@ -205,7 +205,7 @@ class DeepctrlDataset(Dataset):
         return token[:-1].detach().clone(),token[1:].detach().clone()
 
     def __len__(self):
-        return 10*1e6
+        return int(10*1e6)
 
 
 if __name__=="__main__":
