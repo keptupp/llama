@@ -90,7 +90,7 @@ if __name__=="__main__":
         max_batch_size=8,
     ).to(config.device)
 
-    model.load_state_dict(torch.load("weight/belle_epoch_3.pt"))
+    model.load_state_dict(torch.load("weight/finetune_stf.pt"))
 
     dict_data=dict()
 

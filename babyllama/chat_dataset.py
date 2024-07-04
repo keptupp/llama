@@ -189,13 +189,14 @@ class DeepctrlDataset(Dataset):
         json_data=next(self.iter_data)
 
 
-        chat_token=self.tokenizer.encode("资料: ",bos=True,eos=True)
+        # chat_token=self.tokenizer.encode("资料: ",bos=True,eos=True)
+        chat_token=[]
         for one in json_data["history"]:
-            chat_token+=self.tokenizer.encode("\n\n人类: "+one[0],bos=False,eos=False)
-            chat_token+=self.tokenizer.encode("\n\n助手: "+one[1],bos=False,eos=False)
+            chat_token+=self.tokenizer.encode("人类："+one[0],bos=False,eos=False)
+            chat_token+=self.tokenizer.encode("助手："+one[1],bos=False,eos=True)
 
-        chat_token+=self.tokenizer.encode("\n\n人类: "+json_data["input"],bos=False,eos=False)
-        chat_token+=self.tokenizer.encode("\n\n助手: "+json_data["output"],bos=False,eos=True)
+        chat_token+=self.tokenizer.encode("人类："+json_data["input"],bos=False,eos=False)
+        chat_token+=self.tokenizer.encode("助手："+json_data["output"],bos=False,eos=True)
 
         if(len(chat_token)>self.max_len):
             chat_token=(chat_token[:self.max_len-1]+[3])
