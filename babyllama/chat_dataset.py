@@ -199,7 +199,7 @@ class DeepctrlDataset(Dataset):
         chat_token+=self.tokenizer.encode("助手："+json_data["output"],bos=False,eos=True)
 
         if(len(chat_token)>self.max_len):
-            chat_token=(chat_token[:self.max_len-1]+[3])
+            chat_token=(chat_token[:self.max_len-1]+[self.tokenizer.eos_id])
 
         token=torch.tensor(chat_token, dtype=torch.long, device="cuda")
         return token[:-1].detach().clone(),token[1:].detach().clone()
