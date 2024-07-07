@@ -1,9 +1,10 @@
 ## babyllama项目
 
+
 此项目基于[llama](https://github.com/Meta-Llama/llama)代码构建，使用的[llama-chinese](https://github.com/LlamaFamily/Llama-Chinese)中训练的tokenizer做分词。  
 此外还参考了[babyllama](https://github.com/DLLXW/baby-llama2-chinese)对模型大小的研究，发现即使小模型（92M）在垂直领域微调也能有一定的效果。
 
-
+### 知乎新闻预训练，对话微调
 在此基础上，我们构建了一个更小的模型（dim=256,layer=12,head=8），其参数量只有43M，在单卡RTX3090上即可训练，GTX1660ti上即可推理。  
 这个模型主要用于构建数据集和训练代码测试用，我们首先收集了[MNBVC](https://github.com/esbatmop/MNBVC)中的小部分数据做预训练（具体来说只下载了一个知乎新闻josnl，300MB）。  
 基于这个预训练模型，我们收集了[RedGpt](https://github.com/DA-southampton/RedGPT)数据集作为对话的微调，其对话结构更改为：  
@@ -24,6 +25,8 @@
 NaturalConv数据集增加了模型基本聊天能力，但是在pCLUE数据集上训练后表现不行，并且数据集中回答通常为固定短语，对模型影响较大。  
 删除pCLUE数据集重新训练试试。  
 
+
+### 进一步收集的相关数据
   
 下一步，收集一些能增强模型逻辑能力的数据集，如数学，情感，脑筋急转弯等试试，然后去看一下语言模型的评价指标有哪些，看看能达到什么水平。  
   
@@ -46,6 +49,8 @@ $$\text { Train PPL }=\exp \left(-\frac{1}{N} \sum_{i=1}^{N} \log P\left(w_{i}\r
 [BelleGroup0.5M](https://github.com/LianjiaTech/BELLE/tree/main/data/1.5M)数据集，由ChatGpt生成的数据集。  
 [deepctrl-sft-data](https://modelscope.cn/datasets/deepctrl/deepctrl-sft-data/files)10M条数据的中文数据，50类任务。
 
+### wiki数据预训练，对话微调
+
 添加了评价指标精度和困惑度  
 现在尝试使用维基百科的数据预训练，然后在RedGpt、NaturalConv和BelleGroup0.5M上微调，也可以尝试在deepctrl-sft-data上微调。
 
@@ -60,9 +65,27 @@ $$\text { Train PPL }=\exp \left(-\frac{1}{N} \sum_{i=1}^{N} \log P\left(w_{i}\r
   
 下面尝试在redgpt数据集上微调 3 epoch精度57.8%，看起来模型说话的长度变多了，倾向于多介绍一些具体信息。
 在BelleGroup0.5M上微调 3 epoch精度60.2%，可以处理一些简单的多任务，如讲一个笑话，取标题，编写文章等，但是没有连续对话的能力。
-<img src="assert\chat_4.png" alt="图片说明" width=100%>
-<img src="assert\chat_5.png" alt="图片说明" width=100%>
-<img src="assert\chat_6.png" alt="图片说明" width=100%>
+<img src="assert\chat_4.png" alt="图片说明" hight=100%>
+<img src="assert\chat_5.png" alt="图片说明" width=80%>
+<img src="assert\chat_6.png" alt="图片说明" width=30%>
+
+
+### wiki权重后的deepctrl_sft微调
+在deepctrl-sft-data上微调，与其说微调倒不如说更细致的预训练，这个数据集一共训练了50多小时，涵盖的任务广泛。  
+数据太大，没有打乱数据，依次对整合的几个数据集进行了训练，使得模型学习到了一些更加广泛的能力，基本上是样样会，但不精。  
+在loss图上可以清晰的看见在任务分布差异较大的时候loss的剧烈抖动。
+<img src="assert\deepctrl_sft_7.png" alt="图片说明" width=100%>
+<img src="assert\deepctrl_sft_8.png" alt="图片说明" width=100%>
+<img src="assert\deepctrl_sft_9.png" alt="图片说明" width=100%>
+在数据集上看了一下第一次loss抖动的时候，开始学习了翻译能力，其次还有代码编写能力等。
+<img src="assert\chat_7.png" alt="图片说明" wihigjtth=100%>
+<img src="assert\chat_8.png" alt="图片说明" width=100%>
+上述是表现比较好的情况，模型存在遗忘，对训练前期的任务有遗忘，并且这个数据集中也存在一些噪声和安全限制，如模型现在生成自己是Moss，还有一些简单的问题拒绝回答。  
+就把这个数据集也当一个预训练挺好的，相比于wiki数据集的预训练这个数据集更大，预训练的指标表现均更好，说明单纯的让小模型去记忆一些毫无关联的知识数据是很困难的，相反直接训练一些复杂任务，能够提高模型的逻辑能力，具有更高的性价比。  
+  
+接下来进一步选取单一任务，成为一个能够基本对话和文本摘要能力的模型。  
+看看怎么把lcsts和csl数据集进行微调并评分。
+
 
 后续计划
 接下来尝试微调deepctrl-sft-data，这个数据集跟我预训练的数据集大小有得一拼(实际上预训练的wiki数据集训练7个小时，这个数据集训练50个小时)，囊括了BelleGroup数据集。但是发现这个数据集虽然大一些，但是相对好学一些，因为在wiki上2个epoch的acc才37%左右，在此基础上stf训练acc初始阶段就可以上到40%。
