@@ -176,7 +176,16 @@ class DeepctrlDataset(Dataset):
         self.iter_data=self.read_next_line(text_path)
 
         self.max_len=max_len
+        self.nums=0
 
+    def strtojson(self,s):
+        json_data=""
+        try:
+            json_data=json.loads(s)
+        except json.JSONDecodeError:
+            pass
+
+        return json_data
 
     def read_next_line(self,file_path):
         with open(file_path, "r" , encoding="utf-8") as file:
@@ -189,11 +198,10 @@ class DeepctrlDataset(Dataset):
         json_data=next(self.iter_data)
 
 
-        # chat_token=self.tokenizer.encode("资料: ",bos=True,eos=True)
-        chat_token=[]
+        chat_token=self.tokenizer.encode("资料: ",bos=True,eos=True)
         for one in json_data["history"]:
-            chat_token+=self.tokenizer.encode("人类："+one[0],bos=False,eos=False)
-            chat_token+=self.tokenizer.encode("助手："+one[1],bos=False,eos=True)
+            chat_token+=self.tokenizer.encode("\n\n人类: "+one[0],bos=False,eos=False)
+            chat_token+=self.tokenizer.encode("\n\n助手: "+one[1],bos=False,eos=False)
 
         chat_token+=self.tokenizer.encode("人类："+json_data["input"],bos=False,eos=False)
         chat_token+=self.tokenizer.encode("助手："+json_data["output"],bos=False,eos=True)
@@ -201,8 +209,8 @@ class DeepctrlDataset(Dataset):
         if(len(chat_token)>self.max_len):
             chat_token=(chat_token[:self.max_len-1]+[self.tokenizer.eos_id])
 
-        token=torch.tensor(chat_token, dtype=torch.long, device="cuda")
-        return token[:-1].detach().clone(),token[1:].detach().clone()
+        # token=torch.tensor(chat_token, dtype=torch.long, device="cuda")
+        # return token[:-1].detach().clone(),token[1:].detach().clone()
 
     def __len__(self):
         return int(10*1e6)
@@ -239,7 +247,8 @@ if __name__=="__main__":
     # for i,j in bigdataset:
     #     pass
 
-    deepctrldataset=DeepctrlDataset(r"D:\work\Datasets\sft_data_zh.jsonl",r"weight/tokenizer.model",512)
-    for a,one in deepctrldataset:
-        print("++++++++++++++++++++++++++++++++++")
-        print(tokenizer.decode(one.tolist()))
+    deepctrldataset=DeepctrlDataset(r"/home/liuzheng/Data/sft_data_zh.jsonl",r"weight/tokenizer.model",512)
+    for a,one in tqdm(deepctrldataset):
+        # print("++++++++++++++++++++++++++++++++++")
+        # print(tokenizer.decode(one.tolist()))
+        pass
