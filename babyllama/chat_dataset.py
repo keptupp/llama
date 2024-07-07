@@ -80,7 +80,7 @@ def read_pCLUEJSON(text_path,tokenizer):
     print("pCLUE数据集",len(total_chat_token)/1e6,"M")
     return total_chat_token
 
-def read_BelleGroup(text_path,tokenizer):
+def read_BelleGroup0_5M(text_path,tokenizer):
     data=pd.read_json(text_path,lines=True)
     total_chat_token=[]
     for row in data.itertuples():
@@ -91,6 +91,23 @@ def read_BelleGroup(text_path,tokenizer):
         total_chat_token.append(chat_token)
     print("BelleGroup数据集",len(total_chat_token)/1e6,"M")
     return total_chat_token
+
+def read_BelleGroup0_8M(text_path,tokenizer):
+    data=pd.read_json(text_path,lines=True)
+    total_chat_token=[]
+    for row in data.itertuples():
+        total_chat_text=getattr(row,'instruction').replace("Human:","人类：").replace("\nHuman:","人类：").replace("\nAssistant:","助手：")
+        total_chat_text+=getattr(row,'output')
+
+        total_list=total_chat_text.split("人类：")
+        chat_token=[tokenizer.bos_id]
+        for one in total_list:
+            if(len(one)>0):
+                chat_token+=tokenizer.encode(one,bos=False,eos=True)
+        total_chat_token.append(chat_token)
+    print("BelleGroup0.8M数据集",len(total_chat_token)/1e6,"M")
+    return total_chat_token
+        
 
 def read_SFT_json(text_path,tokenizer):
     data=pd.read_json(text_path,lines=True,chunksize=1e5)
@@ -123,7 +140,8 @@ class ChatDataset(Dataset):
         self.tokenizer=Tokenizer(tokenizer_path)
         self.max_len=max_len
 
-        self.data_section+=read_REDGPTJSON(text_path["redgpt"],self.tokenizer)
+        # self.data_section+=read_REDGPTJSON(text_path["redgpt"],self.tokenizer)
+        self.data_section+=read_BelleGroup0_8M(text_path["redgpt0_8M"],self.tokenizer)
             
 
     def __getitem__(self, index):
@@ -247,8 +265,13 @@ if __name__=="__main__":
     # for i,j in bigdataset:
     #     pass
 
-    deepctrldataset=DeepctrlDataset(r"/home/liuzheng/Data/sft_data_zh.jsonl",r"weight/tokenizer.model",512)
-    for a,one in tqdm(deepctrldataset):
-        # print("++++++++++++++++++++++++++++++++++")
-        # print(tokenizer.decode(one.tolist()))
-        pass
+    # deepctrldataset=DeepctrlDataset(r"/home/liuzheng/Data/sft_data_zh.jsonl",r"weight/tokenizer.model",512)
+    # for a,one in tqdm(deepctrldataset):
+    #     # print("++++++++++++++++++++++++++++++++++")
+    #     # print(tokenizer.decode(one.tolist()))
+    #     pass
+
+
+    tokens_list=read_BelleGroup0_8M(r"D:\work\Datasets\multiturn_chat_0.8M.json",tokenizer)
+    for token in tokens_list:
+        print(token)

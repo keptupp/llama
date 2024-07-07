@@ -31,9 +31,6 @@ class Tokenizer:
         self.eos_id: int = self.sp_model.eos_id()
         self.pad_id: int = self.sp_model.pad_id()
 
-        # #添加自定义分词
-        # self.sp_model.AddPiece("助手")
-        # self.sp_model.AddPiece("人类")
 
         logger.info(
             f"#words: {self.n_words} - BOS ID: {self.bos_id} - EOS ID: {self.eos_id}"
