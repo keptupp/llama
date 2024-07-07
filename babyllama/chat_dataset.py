@@ -196,21 +196,21 @@ class DeepctrlDataset(Dataset):
         # if index==519255-1:
         #     self.iter_data=self.read_next_line(self.text_path)
         json_data=next(self.iter_data)
-
-
-        chat_token=self.tokenizer.encode("资料: ",bos=True,eos=True)
+        
+        # chat_token=self.tokenizer.encode("资料: ",bos=True,eos=True)
+        chat_token=[]
         for one in json_data["history"]:
-            chat_token+=self.tokenizer.encode("\n\n人类: "+one[0],bos=False,eos=False)
-            chat_token+=self.tokenizer.encode("\n\n助手: "+one[1],bos=False,eos=False)
+            chat_token+=self.tokenizer.encode("人类："+one[0],bos=False,eos=False)
+            chat_token+=self.tokenizer.encode("助手："+one[1],bos=False,eos=True)
 
         chat_token+=self.tokenizer.encode("人类："+json_data["input"],bos=False,eos=False)
         chat_token+=self.tokenizer.encode("助手："+json_data["output"],bos=False,eos=True)
 
         if(len(chat_token)>self.max_len):
-            chat_token=(chat_token[:self.max_len-1]+[self.tokenizer.eos_id])
+            chat_token=(chat_token[:self.max_len-1]+[3])
 
-        # token=torch.tensor(chat_token, dtype=torch.long, device="cuda")
-        # return token[:-1].detach().clone(),token[1:].detach().clone()
+        token=torch.tensor(chat_token, dtype=torch.long, device="cuda")
+        return token[:-1].detach().clone(),token[1:].detach().clone()
 
     def __len__(self):
         return int(10*1e6)
