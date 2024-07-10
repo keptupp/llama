@@ -48,7 +48,7 @@ def val_epoch(model,dict_data):
     print("平均损失",total_loss/len(dict_data["valdataloader"]),"精确度acc",dict_data["metric"].get_acc())
 
 
-nums=0
+nums=51900
 def train_epoch(model,dict_data):
     global nums
     bar=tqdm(dict_data["pretraindataloader"],ncols=100)
@@ -87,7 +87,7 @@ def train_epoch(model,dict_data):
             dict_data["writer"].add_scalar('Train_PPL',ppl,nums)
             dict_data["writer"].add_scalar('Train_Acc',acc,nums)
         if nums%1e4==0:
-            torch.save(model.state_dict(),"weight/pre_train/finetune_stf.pt")
+            torch.save(model.state_dict(),"weight/pre_train/temp.pt")
 
     print("平均损失",total_loss/len(dict_data["pretraindataloader"]))
 
@@ -109,16 +109,17 @@ if __name__=="__main__":
         max_seq_len=2048,
         max_batch_size=8,
     ).to(config.device)
-    model.load_state_dict(torch.load("weight/pre_train/pretrain_wiki_2_epoch.pt"))
+    model.load_state_dict(torch.load("weight/pre_train/multi_chat_epoch_1.pt"))
 
     # pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=256)
     # pre_dataloader=DataLoader(pre_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
 
-    # data_text=dict()
+    data_text=dict()
     # data_text["redgpt"]=r"/home/liuzheng/Data/RedGPT-Dataset-V1-CN.json"
     # data_text["naturalconv"]=r"/home/liuzheng/Data/NaturalConv.json"
-    # chat_dataset=ChatDataset(data_text,r"weight/tokenizer.model",min_len=32,max_len=2048)
-    # chat_dataloader=DataLoader(chat_dataset,batch_size=4,shuffle=True,collate_fn=my_collate_fn)
+    data_text["redgpt0_8M"]=r"/home/liuzheng/Data/multiturn_chat_0.8M.json"
+    chat_dataset=ChatDataset(data_text,r"weight/tokenizer.model",min_len=32,max_len=512)
+    chat_dataloader=DataLoader(chat_dataset,batch_size=16,shuffle=True,collate_fn=my_collate_fn)
 
     # wiki_dataset=WikiDataset(r"/home/liuzheng/Data/wiki_zh_2019/wiki_zh",r"weight/tokenizer.model",32,256)
     # wiki_dataloader=DataLoader(wiki_dataset,batch_size=32,shuffle=True,collate_fn=my_collate_fn)
@@ -126,20 +127,20 @@ if __name__=="__main__":
     # belle_dataset=BigChatDataset(r"/home/liuzheng/Data/Belle_open_source_0.5M.json",r"weight/tokenizer.model",256)
     # belle_dataloader=DataLoader(belle_dataset,batch_size=32,shuffle=False,collate_fn=my_collate_fn)
 
-    deepctrldataset=DeepctrlDataset(r"/home/liuzheng/Data/sft_data_zh.jsonl",r"weight/tokenizer.model",512)
-    deepctrl_dataloader=DataLoader(deepctrldataset,batch_size=16,shuffle=False,collate_fn=my_collate_fn)
+    # deepctrldataset=DeepctrlDataset(r"/home/liuzheng/Data/sft_data_zh.jsonl",r"weight/tokenizer.model",512)
+    # deepctrl_dataloader=DataLoader(deepctrldataset,batch_size=16,shuffle=False,collate_fn=my_collate_fn)
 
 
     dict_data=dict()
     dict_data["metric"]=Metric()
-    dict_data["pretraindataloader"]=deepctrl_dataloader
-    dict_data["valdataloader"]=deepctrl_dataloader
+    dict_data["pretraindataloader"]=chat_dataloader
+    dict_data["valdataloader"]=chat_dataloader
     dict_data["crossentropyloss"]=nn.CrossEntropyLoss(reduction='none')
 
-    dict_data["epoch"]=1
-    dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=1e-3)
-    dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(deepctrl_dataloader),eta_min=1e-4)
-    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step_5_finetune_deepctrl')
+    dict_data["epoch"]=3
+    dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=6e-4)
+    dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(chat_dataloader),eta_min=1e-4)
+    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step6_finetune_multibeelgroup08M')
 
 
     train(model,dict_data)

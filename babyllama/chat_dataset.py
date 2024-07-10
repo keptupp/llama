@@ -92,47 +92,27 @@ def read_BelleGroup0_5M(text_path,tokenizer):
     print("BelleGroup数据集",len(total_chat_token)/1e6,"M")
     return total_chat_token
 
+#在这个数据集中去掉了资料，为后续自然的文本摘要做铺垫
 def read_BelleGroup0_8M(text_path,tokenizer):
     data=pd.read_json(text_path,lines=True)
     total_chat_token=[]
     for row in data.itertuples():
         total_chat_text=getattr(row,'instruction').replace("Human:","人类：").replace("\nHuman:","人类：").replace("\nAssistant:","助手：")
         total_chat_text+=getattr(row,'output')
+        # print(total_chat_text)
+        # print("=============================")
 
         total_list=total_chat_text.split("人类：")
         chat_token=[tokenizer.bos_id]
         for one in total_list:
-            if(len(one)>0):
-                chat_token+=tokenizer.encode(one,bos=False,eos=True)
+            if(len(one)>1):
+                chat_token+=tokenizer.encode("人类："+one,bos=False,eos=True)
         total_chat_token.append(chat_token)
     print("BelleGroup0.8M数据集",len(total_chat_token)/1e6,"M")
     return total_chat_token
         
 
-def read_SFT_json(text_path,tokenizer):
-    data=pd.read_json(text_path,lines=True,chunksize=1e5)
-    total_chat_token=[]
-    nums=0
-    for one_data in data:
-        # for row in one_data.itertuples():
-        #     history=getattr(row,'history')
-        #     if(len(history)>=1):
-        #         history="".join(history[0])
-        #     else:
-        #         history=""
-        #     chat_token=tokenizer.encode("资料: "+history,bos=True,eos=True)
-        #     chat_token+=tokenizer.encode("\n\n人类: "+getattr(row,'input'),bos=False,eos=False)
-        #     chat_token+=tokenizer.encode("\n\n助手: "+getattr(row,'output'),bos=False,eos=True)
-
-        #     total_chat_token.append(chat_token)
-        print("1111")
-        nums+=1
-    
-    print(nums)
-    print("SFT数据集",len(total_chat_token)/1e6,"M")
-    return total_chat_token
-
-#聊天，每次助手对完话均有一个结束符号3
+#聊天，每次助手对完话均有一个结束符号2
 class ChatDataset(Dataset):
     def __init__(self,text_path,tokenizer_path,min_len,max_len,):
        
@@ -147,7 +127,7 @@ class ChatDataset(Dataset):
     def __getitem__(self, index):
         chat_token=self.data_section[index]
         if(len(chat_token)>self.max_len):
-            chat_token=(chat_token[:self.max_len-1]+[3])
+            chat_token=(chat_token[:self.max_len-1]+[self.tokenizer.eos_id])
         token=torch.tensor(chat_token, dtype=torch.long, device="cuda")
         return token[:-1].detach().clone(),token[1:].detach().clone()
 
@@ -272,6 +252,10 @@ if __name__=="__main__":
     #     pass
 
 
-    tokens_list=read_BelleGroup0_8M(r"D:\work\Datasets\multiturn_chat_0.8M.json",tokenizer)
+    tokens_list=read_BelleGroup0_8M(r"/home/liuzheng/Data/multiturn_chat_0.8M.json",tokenizer)
+    nums=0
     for token in tokens_list:
-        print(token)
+        nums+=(len(token)/1000)
+        print(tokenizer.decode(token))
+
+    print(1000*nums/len(tokens_list))
