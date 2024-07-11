@@ -54,7 +54,7 @@ def chat_epoch(model,dict_data):
 
         token=torch.tensor(reference_token+total_token, dtype=torch.long, device="cuda").unsqueeze(0)
 
-        pre_tokens=model.inference(token,prev_pos=0,max_length=256,top_p=0.3)
+        pre_tokens=model.inference(token,prev_pos=0,max_length=256,top_p=0)
 
         pre_text_list=[model.tokenizer.decode(pre_tokens[i]) for i in range(len(pre_tokens))]
         
