@@ -64,8 +64,8 @@ $$\text { Train PPL }=\exp \left(-\frac{1}{N} \sum_{i=1}^{N} \log P\left(w_{i}\r
 <img src="assert\pre_train_6.png" alt="图片说明" width=100%>
   
 下面尝试在redgpt数据集上微调 3 epoch精度57.8%，看起来模型说话的长度变多了，倾向于多介绍一些具体信息。
-在BelleGroup0.5M上微调 3 epoch精度60.2%，可以处理一些简单的多任务，如讲一个笑话，取标题，编写文章等，但是没有连续对话的能力。
-<img src="assert\chat_4.png" alt="图片说明" hight=100%>
+在BelleGroup0.5M上微调 3 epoch精度60.2%，可以处理一些简单的多任务，如讲一个笑话，取标题，编写文章等，但是没有连续对话的能力。  
+<img src="assert\chat_4.png" alt="图片说明" width=80%>
 <img src="assert\chat_5.png" alt="图片说明" width=80%>
 <img src="assert\chat_6.png" alt="图片说明" width=30%>
 
