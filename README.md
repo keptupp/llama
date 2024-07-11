@@ -78,7 +78,7 @@ $$\text { Train PPL }=\exp \left(-\frac{1}{N} \sum_{i=1}^{N} \log P\left(w_{i}\r
 <img src="assert\deepctrl_sft_8.png" alt="图片说明" width=100%>
 <img src="assert\deepctrl_sft_9.png" alt="图片说明" width=100%>
 在数据集上看了一下第一次loss抖动的时候，开始学习了翻译能力，其次还有代码编写能力等。
-<img src="assert\chat_7.png" alt="图片说明" wihigjtth=100%>
+<img src="assert\chat_7.png" alt="图片说明" width=100%>
 <img src="assert\chat_8.png" alt="图片说明" width=100%>
 上述是表现比较好的情况，模型存在遗忘，对训练前期的任务有遗忘，并且这个数据集中也存在一些噪声和安全限制，如模型现在生成自己是Moss，还有一些简单的问题拒绝回答。  
 就把这个数据集也当一个预训练挺好的，相比于wiki数据集的预训练这个数据集更大，预训练的指标表现均更好，说明单纯的让小模型去记忆一些毫无关联的知识数据是很困难的，相反直接训练一些复杂任务，能够提高模型的逻辑能力，具有更高的性价比。  
@@ -89,8 +89,21 @@ $$\text { Train PPL }=\exp \left(-\frac{1}{N} \sum_{i=1}^{N} \log P\left(w_{i}\r
 ### 微调为摘要专家模型，同时兼具基本对话。
 基本多对话数据集  
 [BelleGroup0.8M](https://huggingface.co/datasets/BelleGroup/multiturn_chat_0.8M)偏生成知识讨论，缺点是需要模型记住一些外部知识，好处是能够提高复杂知识的理解能力。  
-NaturalConv好处是有基本的短对话，能满足基本聊天，缺点是聊天中经常出现没有解释的域外知识关键词进行讨论。
-LCSTS和CSL文本摘要数据集
+NaturalConv好处是有基本的短对话，能满足基本聊天，缺点是聊天中经常出现没有解释的域外知识关键词进行讨论。  
+LCSTS和CSL文本摘要数据集  
+  
+摘要数据集需要进行对话处理，具体实现方法是设置多个询问和回答模板，在模板中加入一些可替换的名词动词等，在数据集加载时动态随机的为每一条摘要数据集都加上询问和回答，从而实现对摘要数据集的对话转变。模板内容如下。    
+<img src="assert\chat_12.png" alt="图片说明" width=50%>
+  
+使用BelleGroup0.8M和CSL数据集进行摘要专家模型的训练，训练过程如下  
+<img src="assert\multi_chat_csl_10.png" alt="图片说明" width=100%>
+<img src="assert\multi_chat_csl_11.png" alt="图片说明" width=100%>
+<img src="assert\multi_chat_csl_12.png" alt="图片说明" width=100%>
+对话表现如下，可看见在兼具基本聊天的情况下可以对文章内容进行总结，并且还兼具了进一步对文章具体信息提问的能力（现在效果不好，后续考虑加入RedGpt数据集，这个数据集对文章内容讨论的对话）。  
+<img src="assert\chat_10.png" alt="图片说明" width=100%>
+<img src="assert\chat_9.png" alt="图片说明" width=100%>
+与多任务大数据集预训练和多对话数据集进行对比下，加入摘要对话数据集后提升效果是显著的。如下为多任务大数据集上的表现（多对话更差）  
+<img src="assert\chat_11.png" alt="图片说明" width=100%>
 
 
 

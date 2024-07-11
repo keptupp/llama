@@ -89,7 +89,7 @@ if __name__=="__main__":
     ).to(config.device)
 
     # model.load_state_dict(torch.load("weight\multi_chat_epoch_1.pt"))
-    model.load_state_dict(torch.load("weight\epoch_3.pt"))
+    model.load_state_dict(torch.load("weight\deep_sft_epoch_1.pt"))
 
     dict_data=dict()
 
