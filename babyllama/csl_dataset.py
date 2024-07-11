@@ -98,6 +98,7 @@ class CSLDataset(Dataset):
 
         self.tokenizer=Tokenizer(tokenizer_path)
         self.max_len=max_len
+        print("CSL摘要数据集",len(self.summary_list)/1e6,"M")
 
     def __getitem__(self, index):
         texts=self.summary_list[index]
@@ -108,6 +109,9 @@ class CSLDataset(Dataset):
 
         token_tensor=torch.tensor(tokens, dtype=torch.long, device="cuda")
         return token_tensor[:-1].detach().clone(),token_tensor[1:].detach().clone()
+
+    def __len__(self):
+        return len(self.summary_list)
     
 
 if __name__=="__main__":
