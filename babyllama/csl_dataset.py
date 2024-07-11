@@ -113,6 +113,59 @@ class CSLDataset(Dataset):
     def __len__(self):
         return len(self.summary_list)
     
+#用于评测，返回询问摘要，和真实摘要
+class CSLDataset_Eval(Dataset):
+    def __init__(self,json_path,tokenizer_path,max_len):
+        self.summary_list=[]
+        self.answer_list=[]
+        with open(json_path,"r",encoding="utf-8") as file:
+            for line in file:
+                json_data=json.loads(line)
+                content=json_data["content"].replace(".","。").replace(",","，")
+                summary=json_data["summary"].replace(".","。").replace(",","，")+"。"
+
+                chat_text="人类："
+
+                question=questions[random.randint(0,len(questions)-1)]#随机选一个问
+                answer=answers[random.randint(0,len(answers)-1)]#随机选一个答
+    
+                #上下文位置
+                if random.randint(0,1)==0:#下，不做处理
+                    chat_text+=question
+                    chat_text+=content
+                else:
+                    chat_text+=content
+                    chat_text+=question.replace("下","上")
+                
+                chat_text+="助手："#止步于此
+
+    
+                #随机名词
+                chat_text=chat_text.replace("文章",dy_text[random.randint(0,len(dy_text)-1)])
+                #随机动词
+                chat_text=chat_text.replace("总结",dy_action[random.randint(0,len(dy_action)-1)])
+
+                self.summary_list.append(chat_text)
+                self.answer_list.append(summary)
+
+        self.tokenizer=Tokenizer(tokenizer_path)
+        self.max_len=max_len
+        print("CSL摘要数据集",len(self.summary_list)/1e6,"M")
+
+    def __getitem__(self, index):
+        question=self.summary_list[index]
+        answer=self.answer_list[index]
+        tokens=self.tokenizer.encode(question,bos=True,eos=False)
+
+        if(len(tokens)>self.max_len):
+            tokens=tokens[:self.max_len-1]+[self.tokenizer.eos_id]
+
+        token_tensor=torch.tensor(tokens, dtype=torch.long, device="cuda")
+        return token_tensor.detach().clone(),answer
+
+    def __len__(self):
+        return len(self.summary_list)
+    
 
 if __name__=="__main__":
     csl_dataset=CSLDataset(r"D:\work\Datasets\CSL\train.json",r"weight\tokenizer.model",max_len=512)

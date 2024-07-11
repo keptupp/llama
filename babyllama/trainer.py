@@ -131,7 +131,7 @@ if __name__=="__main__":
     # deepctrldataset=DeepctrlDataset(r"/home/liuzheng/Data/sft_data_zh.jsonl",r"weight/tokenizer.model",512)
     # deepctrl_dataloader=DataLoader(deepctrldataset,batch_size=16,shuffle=False,collate_fn=my_collate_fn)
 
-    csl_dataset=CSLDataset(r"/home/liuzheng/Data/CSL/train.json",r"weight/tokenizer.model",max_len=512)
+    csl_dataset=CSLDataset(r"/home/liuzheng/Data/CSL/test.json",r"weight/tokenizer.model",max_len=512)
     # csl_dataloader=DataLoader(chat_dataset,batch_size=16,shuffle=True,collate_fn=my_collate_fn)
 
 
