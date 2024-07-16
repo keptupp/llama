@@ -118,8 +118,8 @@ if __name__=="__main__":
     data_text=dict()
     # data_text["redgpt"]=r"/home/liuzheng/Data/RedGPT-Dataset-V1-CN.json"
     # data_text["naturalconv"]=r"/home/liuzheng/Data/NaturalConv.json"
-    data_text["redgpt0_8M"]=r"/home/liuzheng/Data/multiturn_chat_0.8M.json"
-    chat_dataset=ChatDataset(data_text,r"weight/tokenizer.model",min_len=32,max_len=512)
+    # data_text["redgpt0_8M"]=r"/home/liuzheng/Data/multiturn_chat_0.8M.json"
+    # chat_dataset=ChatDataset(data_text,r"weight/tokenizer.model",min_len=32,max_len=512)
     # chat_dataloader=DataLoader(chat_dataset,batch_size=16,shuffle=True,collate_fn=my_collate_fn)
 
     # wiki_dataset=WikiDataset(r"/home/liuzheng/Data+/wiki_zh_2019/wiki_zh",r"weight/tokenizer.model",32,256)
@@ -131,11 +131,11 @@ if __name__=="__main__":
     # deepctrldataset=DeepctrlDataset(r"/home/liuzheng/Data/sft_data_zh.jsonl",r"weight/tokenizer.model",512)
     # deepctrl_dataloader=DataLoader(deepctrldataset,batch_size=16,shuffle=False,collate_fn=my_collate_fn)
 
-    csl_dataset=CSLDataset(r"/home/liuzheng/Data/CSL/test.json",r"weight/tokenizer.model",max_len=512)
+    csl_dataset=CSLDataset(r"/home/liuzheng/Data/CSL/train.json",r"weight/tokenizer.model",max_len=512)
     # csl_dataloader=DataLoader(chat_dataset,batch_size=16,shuffle=True,collate_fn=my_collate_fn)
 
 
-    train_dataset=ConcatDataset([chat_dataset,csl_dataset])
+    train_dataset=ConcatDataset([csl_dataset])
     train_dataloader=DataLoader(train_dataset,batch_size=16,shuffle=True,collate_fn=my_collate_fn)
 
 
@@ -145,10 +145,10 @@ if __name__=="__main__":
     dict_data["valdataloader"]=train_dataloader
     dict_data["crossentropyloss"]=nn.CrossEntropyLoss(reduction='none')
 
-    dict_data["epoch"]=3
+    dict_data["epoch"]=10
     dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=1e-3)
     dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(train_dataloader),eta_min=1e-4)
-    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step7_csl_multichat_finetune')
+    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step8_csl_finetune')
 
 
     train(model,dict_data)

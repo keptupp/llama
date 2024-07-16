@@ -50,7 +50,16 @@ def eval_one(mdoel,dict_data):
             pre=pre_text_list[0].split("。")[1]
         else:
             pre=pre_text_list[0]
-            print(pre)
+            # print(pre)
+        
+        if len(pre)==0:
+            pre=pre_text_list[0]
+            # print(pre)
+        if len(pre)==0:
+            pre="你"
+            # print("输出空")
+
+
 
         
         ref=answer[0][:len(answer[0])-1]
@@ -60,7 +69,8 @@ def eval_one(mdoel,dict_data):
 
         if nums%10==0:
             json_rouge=metric_rouge.get_rouge()
-            bar.set_postfix(rouge_1=json_rouge["rouge-1"]["f"])
+            bar.set_postfix(rouge_1=json_rouge["rouge-1"]["f"],rouge_2=json_rouge["rouge-2"]["f"],rouge_L=json_rouge["rouge-l"]["f"])
+    print(metric_rouge.get_rouge())
         
 
 
@@ -97,12 +107,12 @@ if __name__=="__main__":
         max_batch_size=8,
     ).to(config.device)
 
-    model.load_state_dict(torch.load("weight\epoch_3.pt"))
+    model.load_state_dict(torch.load("weight/pre_train/epoch_8.pt"))
 
 
     dict_data=dict()
 
-    csl_dataset=CSLDataset_Eval(r"D:\work\Datasets\CSL\test.json",r"weight/tokenizer.model",max_len=512)
+    csl_dataset=CSLDataset_Eval(r"/home/liuzheng/Data/CSL/test.json",r"weight/tokenizer.model",max_len=512)
     train_dataloader=DataLoader(csl_dataset,batch_size=1,shuffle=False)
 
     dict_data["eval_dataloader"]=train_dataloader
