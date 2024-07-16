@@ -99,12 +99,13 @@ LCSTS和CSL文本摘要数据集
 <img src="assert\multi_chat_csl_10.png" alt="图片说明" width=100%>
 <img src="assert\multi_chat_csl_11.png" alt="图片说明" width=100%>
 <img src="assert\multi_chat_csl_12.png" alt="图片说明" width=100%>
-对话表现如下，可看见在兼具基本聊天的情况下可以对文章内容进行总结，并且还兼具了进一步对文章具体信息提问的能力（现在效果不好，后续考虑加入RedGpt数据集，这个数据集对文章内容讨论的对话）。  
+对话表现如下，可看见在兼具基本聊天的情况下可以对文章内容进行总结，并且还兼具了进一步对文章具体信息提问的能力（现在效果不好，后续考虑加入RedGpt数据集，这个数据集对文章内容讨论的对话）。此时rouge-1f分数0.567  
 <img src="assert\chat_10.png" alt="图片说明" width=100%>
 <img src="assert\chat_9.png" alt="图片说明" width=100%>
 与多任务大数据集预训练和多对话数据集进行对比下，加入摘要对话数据集后提升效果是显著的。如下为多任务大数据集上的表现（多对话更差）  
 <img src="assert\chat_11.png" alt="图片说明" width=100%>
-
+最终在CSL测试数据集上的rouge-1的f1分数为0.567，相比于我的文本摘要模型0.60低了3个多点。  
+尝试只使用CLS数据集训练10个epoch，最终rouge-1f评分0.584
 
 
 后续计划
