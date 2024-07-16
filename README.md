@@ -95,7 +95,7 @@ LCSTS和CSL文本摘要数据集
 摘要数据集需要进行对话处理，具体实现方法是设置多个询问和回答模板，在模板中加入一些可替换的名词动词等，在数据集加载时动态随机的为每一条摘要数据集都加上询问和回答，从而实现对摘要数据集的对话转变。模板内容如下。    
 <img src="assert\chat_12.png" alt="图片说明" width=50%>
   
-使用BelleGroup0.8M和CSL数据集进行摘要专家模型的训练，训练过程如下  
+使用BelleGroup0.8M和CSL数据集进行摘要专家模型的训练，3epoch训练过程如下  
 <img src="assert\multi_chat_csl_10.png" alt="图片说明" width=100%>
 <img src="assert\multi_chat_csl_11.png" alt="图片说明" width=100%>
 <img src="assert\multi_chat_csl_12.png" alt="图片说明" width=100%>
@@ -104,10 +104,12 @@ LCSTS和CSL文本摘要数据集
 <img src="assert\chat_9.png" alt="图片说明" width=100%>
 与多任务大数据集预训练和多对话数据集进行对比下，加入摘要对话数据集后提升效果是显著的。如下为多任务大数据集上的表现（多对话更差）  
 <img src="assert\chat_11.png" alt="图片说明" width=100%>
+最终在CSL测试数据集上的rouge-1的f1分数为0.567，相比于我的文本摘要模型0.60低了3个多点。  
+尝试只使用CLS数据集训练5个epoch
 
 
 
 后续计划
-将专家摘要对话中的摘要与原始摘要进行rouge评分
-使用lora的微调方法看看效果。  
+将专家摘要对话中的摘要与原始摘要进行rouge评分  
+使用lora的微调方法看看效果。   
 找一个vqa数据集，尝试接入efficientvit网络（后续看看怎么特征融合）做多模态.
