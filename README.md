@@ -109,6 +109,12 @@ LCSTS和CSL文本摘要数据集
 尝试只使用CLS数据集训练10个epoch，最终rouge-1f评分0.584
 
 
+找了一些多模态数据集  
+[chinese-llava](https://github.com/LinkSoul-AI/Chinese-LLaVA?tab=readme-ov-file)一个对llava数据集做翻译后的中文多模态数据集  
+[sharegpt4v](https://github.com/ShareGPT4Omni/ShareGPT4V)使用gpt4v对图片生成高质量密集描述，100k的图片主要来自coco、sam、llava  
+
+
+
 后续计划
 将专家摘要对话中的摘要与原始摘要进行rouge评分  
 使用lora的微调方法看看效果。   
