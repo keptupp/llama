@@ -59,8 +59,8 @@ class Vision_Chat_Dataset(Dataset):
         image=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
         image=self.norm(image)
 
-        cv2.imshow("test",image.permute(1,2,0).numpy())
-        cv2.waitKey(2000)
+        # cv2.imshow("test",image.permute(1,2,0).numpy())
+        # cv2.waitKey(2000)
         
 
         if(len(total_token)>self.max_len):

@@ -15,6 +15,7 @@ from datasets.vision_chat_dataset import Vision_Chat_Dataset
 
 def my_collate_fn(batch):
     max_lenght=max([one[0].shape[0] for one in batch])
+    # max_lenght=512
 
     padding_before_token=None
     padding_after_token=None
@@ -106,20 +107,24 @@ def train(model,dict_data):
         
 
 if __name__=="__main__":
-    model = BabyLLaVa.build(tokenizer_path="weight/tokenizer.model").to(config.device)
-    # model.load_state_dict(torch.load("weight/pre_train/pretrain_deepctrl_sft_epoch_1.pt"))
+    model = BabyLLaVa.build(tokenizer_path="./weight/tokenizer.model").to(config.device)
+
+    # 尝试把deepctrl-sft的transformer权重加载进去，没加载前开始损失5-6
+    # 加载transformer权重后开始损失只有3
+    model.load_state_dict(torch.load("weight/pre_train/pretrain_deepctrl_sft_epoch_1.pt"),strict=False)
 
 
-    text_path=r"D:\work\Datasets\Chinese-LLaVA-Vision-Instructions\LLaVA-Instruct-150K\translated\llava_instruct_80k.json"
-    image_path=r"D:\work\Datasets\sharegptv4\coco\train2017"
-    tokenizer_path=r"weight\tokenizer.model"
+
+    text_path=r"/home/liuzheng/Data/Chinese-LLaVA-Vision-Instructions/LLaVA-Instruct-150K/translated/llava_instruct_150k.json"
+    image_path=r"/home/liuzheng/Data/sharegpt4v/train2017"
+    tokenizer_path="weight/tokenizer.model"
     vision_chat_dataset=Vision_Chat_Dataset(text_path,image_path,tokenizer_path,0,512)
 
 
 
 
     train_dataset=ConcatDataset([vision_chat_dataset])
-    train_dataloader=DataLoader(train_dataset,batch_size=2,shuffle=True,collate_fn=my_collate_fn)
+    train_dataloader=DataLoader(train_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
 
 
     dict_data=dict()
@@ -128,7 +133,7 @@ if __name__=="__main__":
     dict_data["valdataloader"]=train_dataloader
     dict_data["crossentropyloss"]=nn.CrossEntropyLoss(reduction='none')
 
-    dict_data["epoch"]=3
+    dict_data["epoch"]=6
     dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=1e-3)
     dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(train_dataloader),eta_min=1e-4)
     dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step9_multimodal')

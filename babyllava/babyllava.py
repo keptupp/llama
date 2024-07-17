@@ -95,6 +95,7 @@ class BabyLLaVa(nn.Module):
         model = Transformer_Vision(model_args)
 
         image_encoder=edgenext_small()
+        image_encoder.load_state_dict(torch.load("weight/edgenext_small.pth")["model"],strict=False)#去掉头的权重
         print("模型配置参数",model_args)
         babyllava=BabyLLaVa(model, tokenizer ,image_encoder)
         num_params = sum(p.numel() for p in babyllava.parameters() if p.requires_grad)
@@ -114,7 +115,6 @@ class BabyLLaVa(nn.Module):
         images,
         prev_pos=0
     ):
-        print(prompt_tokens.shape)
         image_features=self.image_encoder(images)
 
         # for one in image_features:
