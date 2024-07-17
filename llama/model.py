@@ -512,3 +512,77 @@ class Transformer(nn.Module):
         # output = self.output(h).float()
         output = self.output(h)
         return output
+
+
+class Transformer_Vision(nn.Module):
+    def __init__(self, params: ModelArgs):
+        """
+            主要是把图片的token在attention处加入
+            上面的只能输入token,embedding在模型里面
+        """
+        super().__init__()
+        self.params = params
+        self.vocab_size = params.vocab_size
+        self.n_layers = params.n_layers
+
+        self.tok_embeddings = ParallelEmbedding(
+            params.vocab_size, params.dim
+        )
+
+        self.layers = torch.nn.ModuleList()
+        for layer_id in range(params.n_layers):
+            self.layers.append(TransformerBlock(layer_id, params))
+
+        self.norm = RMSNorm(params.dim, eps=params.norm_eps)
+        self.output = ColumnParallelLinear(
+            params.dim, params.vocab_size, bias=False
+        )
+
+        self.freqs_cis = precompute_freqs_cis(
+            self.params.dim // self.params.n_heads, self.params.max_seq_len * 2
+        ).cuda()
+
+    # @torch.inference_mode()
+    def forward(self, tokens: torch.Tensor , image_h: torch.Tensor , start_pos: int):
+        _bsz, seqlen = tokens.shape
+        seqlen+=image_h.shape[1]
+        h = self.tok_embeddings(tokens)
+        # print("self.freqs_cis.shape",self.freqs_cis.shape)
+        # print("h",h.shape)
+        # self.freqs_cis = self.freqs_cis.to(h.device)
+        freqs_cis = self.freqs_cis[:seqlen]
+        # print("freqs_cis.shape",freqs_cis.shape)
+
+        mask = None
+        if seqlen > 1:
+            mask = torch.full(
+                (seqlen, seqlen), float("-inf"), device=tokens.device
+            )
+            # print("mask",mask.shape)
+
+            mask = torch.triu(mask, diagonal=1)
+
+            # print("mask",mask.shape)
+
+            # When performing key-value caching, we compute the attention scores
+            # only for the new sequence. Thus, the matrix of scores is of size
+            # (seqlen, cache_len + seqlen), and the only masked entries are (i, j) for
+            # j > cache_len + i, since row i corresponds to token cache_len + i.
+            mask = torch.hstack([
+                torch.zeros((seqlen, 0), device=tokens.device),
+                mask
+            ]).type_as(h)
+
+            # print(mask)
+
+            mask[:start_pos, :start_pos] = 0
+
+            # print("mask",mask.shape)
+            # print(mask)
+        h=torch.cat([image_h,h],dim=1)#图像的token和文本token结合
+        for layer in self.layers:
+            h = layer(h, 0, freqs_cis, mask)
+        h = self.norm(h)
+        # output = self.output(h).float()
+        output = self.output(h)
+        return output
