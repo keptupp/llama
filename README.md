@@ -109,13 +109,21 @@ LCSTS和CSL文本摘要数据集
 尝试只使用CLS数据集训练10个epoch，最终rouge-1f评分0.584
 
 
-找了一些多模态数据集  
+### 多模态训练  
 [chinese-llava](https://github.com/LinkSoul-AI/Chinese-LLaVA?tab=readme-ov-file)一个对llava数据集做翻译后的中文多模态数据集  
 [sharegpt4v](https://github.com/ShareGPT4Omni/ShareGPT4V)使用gpt4v对图片生成高质量密集描述，100k的图片主要来自coco、sam、llava  
 最终选择了chinese-llava对llava的语料做的翻译，只训练指令微调的150K数据，图片来源于coco，为单图片多对话数据集。
 使用edgenext做图像编码器(带image预训练权重)，加一个类似于llava中的project_w做转接，llava依旧时上面的结构（加deepctrl-sft预训练权重），将提取的不同层特征转为文本token维度与原始文本的token拼接  
 在训练时不对图片token掩码，图片位置处预测的token舍弃，只对文本处计算损失。现在模型总参数量49.12M  
 
+使用chinese-llava中的llava_instruct_150k直接训练，效果不是很好，应该是图像编码器没有预训练的原因，在域外图片上泛化效果太差了，毕竟语言模型可是训练了50个小时  
+效果如下，已经是比较好的情况  
+<img src="assert\chat_13.png" alt="图片说明" width=45%>
+<img src="assert\chat_14.png" alt="图片说明" width=45%>
+  
+  
+
+使用LLaVA-CC3M-Pretrain-595K预训练一下看看
 
 
 后续计划

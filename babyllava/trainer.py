@@ -102,9 +102,6 @@ if __name__=="__main__":
     tokenizer_path="weight/tokenizer.model"
     vision_chat_dataset=Vision_Chat_Dataset(text_path,image_path,tokenizer_path,0,512)
 
-
-
-
     train_dataset=ConcatDataset([vision_chat_dataset])
     train_dataloader=DataLoader(train_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
 
