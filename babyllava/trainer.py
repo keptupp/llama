@@ -32,24 +32,6 @@ def my_collate_fn(batch):
 
     return padding_before_token,padding_after_token,images
 
-@torch.no_grad()
-def val_epoch(model,dict_data):
-    total_loss=0
-
-    bar=tqdm(dict_data["valdataloader"],ncols=100)
-    for before,after in bar:
-        pre_tokens=model(before,0)
-        pre_tokens=pre_tokens.permute(0,2,1)
-        loss=dict_data["crossentropyloss"](pre_tokens,after)
-        mask=(after!=0).float()
-        loss=(loss*mask).sum()/mask.sum()
-
-        dict_data["metric"].update_acc(pre_tokens,after)
-
-        bar.set_postfix(loss=loss.item(),acc=dict_data["metric"].get_acc())
-        total_loss+=loss.item()
-        
-    print("平均损失",total_loss/len(dict_data["valdataloader"]),"精确度acc",dict_data["metric"].get_acc())
 
 
 nums=0

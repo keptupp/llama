@@ -17,6 +17,7 @@ from llama.model import ModelArgs, Transformer_Vision
 from llama.tokenizer import Tokenizer
 from edgenext.edgenext import EdgeNeXt
 from edgenext.model import edgenext_small
+from llama.generation import sample_top_p
 import config
 import torch.nn.functional as F
 
@@ -124,6 +125,31 @@ class BabyLLaVa(nn.Module):
 
         logits = self.model(prompt_tokens,image_tokens ,prev_pos)
         return logits
+    def inference(self,token,image,prev_pos=0,max_length=256,top_p=0):
+        pre_text=[]
+        image_features=self.image_encoder(image)
+        image_tokens=self.project_w(image_features)
+        #目前这个方法还只适用于batchsize=1
+        for i in range(max_length):
+            logits = self.model(token,image_tokens,prev_pos)
+
+            temperature=1
+            pre_tokens = torch.softmax(logits[:, -1] / temperature, dim=-1)
+
+            if(top_p>0):
+                pre_tokens = sample_top_p(pre_tokens, top_p)
+            else:
+                pre_tokens=torch.argmax(pre_tokens,dim=-1).unsqueeze(0)
+
+            last_token=pre_tokens[:,-1].item()
+
+            pre_text.append(last_token)
+
+            if(last_token==self.tokenizer.eos_id):
+                break
+
+            token=torch.cat([token,pre_tokens[:,-1].unsqueeze(0)],dim=1)
+        return [pre_text]
     
 
 if __name__=="__main__":

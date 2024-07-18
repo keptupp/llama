@@ -129,7 +129,7 @@ class Llama(nn.Module):
         prompt_tokens: List[List[int]],
         prev_pos=0,
         max_length=256,
-        top_p=0.9
+        top_p=0
     ):  
         pre_text=[]
         #目前这个方法还只适用于batchsize=1
@@ -140,7 +140,7 @@ class Llama(nn.Module):
             pre_tokens = torch.softmax(logits[:, -1] / temperature, dim=-1)
 
             if(top_p>0):
-                pre_tokens = sample_top_p(pre_tokens, 0.5)
+                pre_tokens = sample_top_p(pre_tokens,top_p)
             else:
                 pre_tokens=torch.argmax(pre_tokens,dim=-1).unsqueeze(0)
 
