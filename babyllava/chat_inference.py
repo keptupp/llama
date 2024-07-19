@@ -42,7 +42,7 @@ def chat_epoch(model,dict_data):
 
         token=torch.tensor(total_token, dtype=torch.long, device="cuda").unsqueeze(0)
 
-        pre_tokens=model.inference(token,image,prev_pos=40,max_length=512,top_p=0)
+        pre_tokens=model.inference(token,image,prev_pos=38,max_length=512,top_p=0.5)
 
         pre_text_list=[model.tokenizer.decode(pre_tokens[i]) for i in range(len(pre_tokens))]
         
@@ -59,7 +59,7 @@ if __name__=="__main__":
     ).to(config.device)
 
     # model.load_state_dict(torch.load("weight\multi_chat_epoch_1.pt"))
-    model.load_state_dict(torch.load("weight/chinese_150k_epoch_6.pt"))
+    model.load_state_dict(torch.load("weight\multimodal\llava_150K_epoch_6.pt"))
 
     dict_data=dict()
     dict_data["image_path"]=r"assert\IMG_20240706_130959.jpg"
