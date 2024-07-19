@@ -52,6 +52,7 @@ class Vision_Chat_Dataset(Dataset):
         h,w,c=image.shape
         ratio=512/max([h,w])
         new_h,new_w=int(round(h*ratio)),int(round(w*ratio))
+        # print(new_h,new_w)
         image=cv2.resize(image,[new_w,new_h])
 
         image = cv2.copyMakeBorder(image, 0, 512-new_h, 0, 512-new_w, cv2.BORDER_CONSTANT, None, (0, 0, 0))
