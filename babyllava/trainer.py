@@ -93,12 +93,15 @@ if __name__=="__main__":
 
     # 尝试把deepctrl-sft的transformer权重加载进去，没加载前开始损失5-6
     # 加载transformer权重后开始损失只有3
-    model.load_state_dict(torch.load("weight/pre_train/pretrain_deepctrl_sft_epoch_1.pt"),strict=False)
+    model.load_state_dict(torch.load("weight/multimodal/chinese_llava595k_epoch_2.pt"),strict=True)
 
 
 
     text_path=r"/home/liuzheng/Data/Chinese-LLaVA-Vision-Instructions/LLaVA-Instruct-150K/translated/llava_instruct_150k.json"
+    # text_path=r"/home/liuzheng/Data/Chinese-LLaVA-Vision-Instructions/LLaVA-CC3M-Pretrain-595K/chat-translated.json"
+    
     image_path=r"/home/liuzheng/Data/sharegpt4v/train2017"
+    # image_path=r"/home/liuzheng/Data/Chinese-LLaVA-Vision-Instructions/LLaVA-CC3M-Pretrain-595K/images"
     tokenizer_path="weight/tokenizer.model"
     vision_chat_dataset=Vision_Chat_Dataset(text_path,image_path,tokenizer_path,0,512)
 
@@ -115,7 +118,7 @@ if __name__=="__main__":
     dict_data["epoch"]=6
     dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=1e-3)
     dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(train_dataloader),eta_min=1e-4)
-    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step9_multimodal')
+    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step11_multimodal_llava150k')
 
 
     train(model,dict_data)
