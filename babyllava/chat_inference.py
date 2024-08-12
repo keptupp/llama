@@ -59,7 +59,7 @@ if __name__=="__main__":
     ).to(config.device)
 
     # model.load_state_dict(torch.load("weight\multi_chat_epoch_1.pt"))
-    model.load_state_dict(torch.load("weight/chinese_150k_epoch_6.pt"))
+    model.load_state_dict(torch.load("weight\multimodal\llava_150K_epoch_6.pt"))
 
     dict_data=dict()
     dict_data["image_path"]=r"assert\IMG_20240706_130959.jpg"

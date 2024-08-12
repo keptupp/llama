@@ -121,9 +121,15 @@ LCSTS和CSL文本摘要数据集
 <img src="assert\chat_13.png" alt="图片说明" width=45%>
 <img src="assert\chat_14.png" alt="图片说明" width=45%>
   
-  
 
-使用LLaVA-CC3M-Pretrain-595K预训练一下看看
+使用LLaVA-CC3M-Pretrain-595K预训练一下看看，效果不明显  
+<img src="assert\pre_train_7.png" alt="图片说明" width=100%>
+有两种可能  
+1、这些数据对模型来说太少了，语言模型就可以很容易学习到交流内容，不依托图片特征，看acc就知道模型，他的准确率比纯文本模型高，说明文字内容被快速学会了  
+2、图片模型提取的特征转为token的太少，很难捕获到有用的内容  
+
+首先考虑的是语言的过拟合  
+先尝试固定语言模型权重，只训练图片模型部分（看看是降低语言模型学习率还是直接固定）
 
 
 后续计划
