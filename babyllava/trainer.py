@@ -93,7 +93,14 @@ if __name__=="__main__":
 
     # 尝试把deepctrl-sft的transformer权重加载进去，没加载前开始损失5-6
     # 加载transformer权重后开始损失只有3
-    model.load_state_dict(torch.load("weight/multimodal/chinese_llava595k_epoch_2.pt"),strict=True)
+    model.load_state_dict(torch.load("weight/multimodal/chinese_llava195K_difflr_epoch_2.pt"),strict=False)
+
+    #固定语言模型权重，只训练图片编码器和project_w
+    # for name, param in model.named_parameters():
+    #     print(name)
+        # if param.requires_grad:
+        #     if "model" in name:
+        #         param.requires_grad = False
 
 
 
@@ -106,7 +113,7 @@ if __name__=="__main__":
     vision_chat_dataset=Vision_Chat_Dataset(text_path,image_path,tokenizer_path,0,512)
 
     train_dataset=ConcatDataset([vision_chat_dataset])
-    train_dataloader=DataLoader(train_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
+    train_dataloader=DataLoader(train_dataset,batch_size=16,shuffle=True,collate_fn=my_collate_fn)
 
 
     dict_data=dict()
@@ -116,9 +123,13 @@ if __name__=="__main__":
     dict_data["crossentropyloss"]=nn.CrossEntropyLoss(reduction='none')
 
     dict_data["epoch"]=6
-    dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=1e-3)
-    dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(train_dataloader),eta_min=1e-4)
-    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step11_multimodal_llava150k')
+    dict_data["optimizer"] = optim.AdamW([
+        {'params': model.image_encoder.parameters(), 'lr': 1e-4},
+        {'params': model.model.parameters(), 'lr': 1e-5},
+        {'params': model.project_w.parameters(), 'lr': 1e-4}
+    ])
+    dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(train_dataloader))
+    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step15_multimodal_difflr_llava150K')
 
 
     train(model,dict_data)

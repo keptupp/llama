@@ -110,7 +110,7 @@ if __name__=="__main__":
         max_seq_len=2048,
         max_batch_size=8,
     ).to(config.device)
-    model.load_state_dict(torch.load("weight/pre_train/pretrain_deepctrl_sft_epoch_1.pt"))
+    model.load_state_dict(torch.load("weight/pre_train/pretrain_deepctrl_sft_epoch_1.pt"),strict=False)
 
     # pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=256)
     # pre_dataloader=DataLoader(pre_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
@@ -146,9 +146,9 @@ if __name__=="__main__":
     dict_data["crossentropyloss"]=nn.CrossEntropyLoss(reduction='none')
 
     dict_data["epoch"]=10
-    dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=1e-3)
-    dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(train_dataloader),eta_min=1e-4)
-    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step8_csl_finetune')
+    dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=1e-4)
+    dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(train_dataloader),eta_min=1e-5)
+    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step16_gl_csl')
 
 
     train(model,dict_data)

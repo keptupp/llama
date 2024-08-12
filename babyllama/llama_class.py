@@ -18,6 +18,8 @@ from fairscale.nn.model_parallel.initialize import (
 )
 
 from llama.model import ModelArgs, Transformer
+# from llama.model_GL import ModelArgs, Transformer
+
 from llama.tokenizer import Tokenizer
 import config
 import torch.nn as nn
@@ -156,3 +158,36 @@ class Llama(nn.Module):
             # print(prompt_tokens.shape)
     
         return [pre_text]
+    
+
+    def batch_inference(
+        self,
+        prompt_tokens: List[List[int]],
+        prev_pos=0,
+        max_length=256,
+        top_p=0
+    ):  
+        pre_text=[[] for _ in range(prompt_tokens.shape[0])]
+        #目前这个方法还只适用于batchsize=1
+        for i in range(max_length):
+            logits = self.model(prompt_tokens, prev_pos)
+
+            temperature=1
+            pre_tokens = torch.softmax(logits[:, -1] / temperature, dim=-1)
+
+ 
+            pre_tokens=torch.argmax(pre_tokens,dim=-1).unsqueeze(1)
+
+            # print(pre_tokens.shape)
+
+            # for i in range(prompt_tokens.shape[0]):
+            #     pre_text[i].append(pre_tokens[i,0].item())
+
+            # if(last_token==self.tokenizer.eos_id):
+            #     break
+            print(prompt_tokens.shape,pre_tokens.shape)
+            prompt_tokens=torch.cat([prompt_tokens,pre_tokens[:,-1].unsqueeze(0)],dim=1)
+
+            # print(prompt_tokens.shape)
+    
+        return pre_text
