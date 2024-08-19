@@ -29,12 +29,16 @@ def my_collate_fn(batch):
 
     return padding_before_token,padding_after_token
 
+nums_val=0
 @torch.no_grad()
 def val_epoch(model,dict_data):
+    global nums_val
     total_loss=0
+    metric=Metric()
 
     bar=tqdm(dict_data["valdataloader"],ncols=100)
     for before,after in bar:
+        nums_val+=1
         pre_tokens=model(before,0)
         pre_tokens=pre_tokens.permute(0,2,1)
         loss=dict_data["crossentropyloss"](pre_tokens,after)
@@ -45,6 +49,15 @@ def val_epoch(model,dict_data):
 
         bar.set_postfix(loss=loss.item(),acc=dict_data["metric"].get_acc())
         total_loss+=loss.item()
+
+        if nums_val%50==0:
+            dict_data["writer"].add_scalar('Val_Loss',loss.item(),nums_val)
+            metric.update_acc(pre_tokens,after)
+            acc=metric.get_acc()
+
+            ppl=metric.get_ppl(pre_tokens,after)
+            dict_data["writer"].add_scalar('Val_PPL',ppl,nums_val)
+            dict_data["writer"].add_scalar('Val_Acc',acc,nums_val)
         
     print("平均损失",total_loss/len(dict_data["valdataloader"]),"精确度acc",dict_data["metric"].get_acc())
 
@@ -99,7 +112,7 @@ def train(model,dict_data):
         print("epoch",epoch)
         train_epoch(model,dict_data)
 
-        # val_epoch(model,dict_data)
+        val_epoch(model,dict_data)
 
         torch.save(model.state_dict(),"weight/pre_train/epoch_"+str(epoch)+".pt")
         
@@ -110,7 +123,8 @@ if __name__=="__main__":
         max_seq_len=2048,
         max_batch_size=8,
     ).to(config.device)
-    model.load_state_dict(torch.load("weight/pre_train/pretrain_deepctrl_sft_epoch_1.pt"),strict=False)
+    # model.load_state_dict(torch.load("weight/pre_train/pretrain_deepctrl_sft_epoch_1.pt"),strict=False)
+    # model.load_state_dict(torch.load("weight/pre_train/epoch_10.pt"),strict=True)
 
     # pre_dataset=PreTrainDataset(r"/home/liuzheng/Data/MNBVC/20230196/github.20230196/11.jsonl",r"weight/tokenizer.model",min_len=32,max_len=256)
     # pre_dataloader=DataLoader(pre_dataset,batch_size=8,shuffle=True,collate_fn=my_collate_fn)
@@ -134,21 +148,26 @@ if __name__=="__main__":
     csl_dataset=CSLDataset(r"/home/liuzheng/Data/CSL/train.json",r"weight/tokenizer.model",max_len=512)
     # csl_dataloader=DataLoader(chat_dataset,batch_size=16,shuffle=True,collate_fn=my_collate_fn)
 
+    csl_val_dataset=CSLDataset(r"/home/liuzheng/Data/CSL/val.json",r"weight/tokenizer.model",max_len=512)
+
 
     train_dataset=ConcatDataset([csl_dataset])
     train_dataloader=DataLoader(train_dataset,batch_size=16,shuffle=True,collate_fn=my_collate_fn)
+    
+    csl_val_dataloader=DataLoader(csl_val_dataset,batch_size=16,shuffle=False,collate_fn=my_collate_fn)
+
 
 
     dict_data=dict()
     dict_data["metric"]=Metric()
     dict_data["pretraindataloader"]=train_dataloader
-    dict_data["valdataloader"]=train_dataloader
+    dict_data["valdataloader"]=csl_val_dataloader
     dict_data["crossentropyloss"]=nn.CrossEntropyLoss(reduction='none')
 
     dict_data["epoch"]=10
-    dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=1e-4)
-    dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(train_dataloader),eta_min=1e-5)
-    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step16_gl_csl')
+    dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=1e-3)
+    dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(train_dataloader),eta_min=1e-4)
+    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step20_gl_csl_new3')
 
 
     train(model,dict_data)

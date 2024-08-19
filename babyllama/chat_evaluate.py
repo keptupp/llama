@@ -151,7 +151,7 @@ if __name__=="__main__":
         max_batch_size=8,
     ).to(config.device)
 
-    model.load_state_dict(torch.load("weight/pre_train/maybe_csl_epoch_10.pt"))
+    model.load_state_dict(torch.load("weight/pre_train/epoch_10.pt"),strict=True)
 
 
     dict_data=dict()

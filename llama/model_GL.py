@@ -374,6 +374,7 @@ class TransformerBlock(nn.Module):
 
         """
         super().__init__()
+        self.replace_dims=128
         self.n_heads = args.n_heads
         self.dim = args.dim
         self.head_dim = args.dim // args.n_heads
@@ -389,9 +390,14 @@ class TransformerBlock(nn.Module):
         self.ffn_norm = RMSNorm(args.dim, eps=args.norm_eps)
         # 用于局部编码的卷积网络
         self.advance_padding=4
+        
         self.local_cnn=nn.Sequential(
-            nn.Conv1d(in_channels=args.dim, out_channels=4*args.dim, kernel_size=5,padding=self.advance_padding),
+            nn.Conv1d(in_channels=args.dim, out_channels=args.dim, kernel_size=5,padding=self.advance_padding),
+            nn.LeakyReLU(),
+            nn.Conv1d(in_channels=args.dim, out_channels=4*args.dim, kernel_size=1),
+            nn.LeakyReLU(),
             nn.Conv1d(in_channels=4*args.dim, out_channels=args.dim, kernel_size=1),
+            nn.Tanh()
         )
 
     def forward(
@@ -414,11 +420,7 @@ class TransformerBlock(nn.Module):
             torch.Tensor: Output tensor after applying attention and feedforward layers.
 
         """
-        h = x + self.attention(
-            self.attention_norm(x), start_pos, freqs_cis, mask
-        )
-        
-        # 注意力后，使用一维卷积提取特征b,l,d
+
         """
             特别注意，由于输出h中的每一个token都是基于之前的历史信息attention得到的，
             如果在这里直接按照正常情况卷积，卷积提取的token特征会作弊，将下一个词的特征也带入进来了，
@@ -427,14 +429,15 @@ class TransformerBlock(nn.Module):
             123456==>00001234560000
             这样卷积的时候，2的预测依赖于00001，3的预测依赖于00012，就不会暴露之前的信息了
         """
-        h=h.permute(0,2,1)
-        local_h=self.local_cnn(h)[:,:,:-self.advance_padding]
-
-        w_h=torch.max(h,dim=1)
-        w_lh=torch.max(local_h,dim=1)
-        #增加一个权重，每个token都计算一个权重
-        h=(w_h/(w_h+w_lh))*h+(w_lh/(w_h+w_lh))*local_h
-        h=h.permute(0,2,1)
+        local_h=self.local_cnn(x.permute(0,2,1))[:,:,:-self.advance_padding]
+        local_h=local_h.permute(0,2,1)
+        
+        h=x+0.5*local_h
+        
+        
+        h = h + self.attention(
+            self.attention_norm(h), start_pos, freqs_cis, mask
+        )
 
         out = h + self.feed_forward(self.ffn_norm(h))
         return out
@@ -486,7 +489,7 @@ class Transformer(nn.Module):
 
         #增加的全局编码的的大小
         self.token_nums=8
-        self.global_token=nn.Parameter(torch.rand(1,self.token_nums,256))
+        self.global_token=nn.Parameter(torch.rand(1,self.token_nums,self.params.dim))
 
     # @torch.inference_mode()
     def forward(self, tokens: torch.Tensor, start_pos: int):
