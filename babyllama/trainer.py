@@ -14,20 +14,34 @@ from torch.utils.tensorboard import SummaryWriter
 from tools.metric import Metric
 from csl_dataset import CSLDataset
 
+# def my_collate_fn(batch):
+#     max_lenght=max([one[0].shape[0] for one in batch])
+#     padding_before_token=None
+#     padding_after_token=None
+#     for one in batch:
+#         if padding_before_token is None:
+#             padding_before_token=torch.nn.functional.pad(one[0], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)
+#             padding_after_token=torch.nn.functional.pad(one[1], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)
+#         else:
+#             padding_before_token=torch.cat([padding_before_token,torch.nn.functional.pad(one[0], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)],dim=0)
+#             padding_after_token=torch.cat([padding_after_token,torch.nn.functional.pad(one[1], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)],dim=0)
+#     return padding_before_token,padding_after_token
 def my_collate_fn(batch):
     max_lenght=max([one[0].shape[0] for one in batch])
 
     padding_before_token=None
     padding_after_token=None
+    global_w=None
     for one in batch:
         if padding_before_token is None:
             padding_before_token=torch.nn.functional.pad(one[0], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)
             padding_after_token=torch.nn.functional.pad(one[1], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)
+            global_w=torch.nn.functional.pad(one[2], (0,4-one[2].shape[0]), mode='constant', value=0).unsqueeze(0)
         else:
             padding_before_token=torch.cat([padding_before_token,torch.nn.functional.pad(one[0], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)],dim=0)
             padding_after_token=torch.cat([padding_after_token,torch.nn.functional.pad(one[1], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)],dim=0)
-
-    return padding_before_token,padding_after_token
+            global_w=torch.cat([global_w,torch.nn.functional.pad(one[2], (0,4-one[2].shape[0]), mode='constant', value=0).unsqueeze(0)],dim=0)
+    return padding_before_token,padding_after_token,global_w
 
 nums_val=0
 @torch.no_grad()
@@ -37,7 +51,7 @@ def val_epoch(model,dict_data):
     metric=Metric()
 
     bar=tqdm(dict_data["valdataloader"],ncols=100)
-    for before,after in bar:
+    for before,after,g_w,m_l in bar:
         nums_val+=1
         pre_tokens=model(before,0)
         pre_tokens=pre_tokens.permute(0,2,1)
@@ -69,12 +83,12 @@ def train_epoch(model,dict_data):
 
     total_loss=0
 
-    for before,after in bar:
+    for before,after,g_w,m_l in bar:
         dict_data["optimizer"].zero_grad()
 
         # start_pos=np.random.randint(32)
         start_pos=0
-        pre_tokens=model(before,start_pos)
+        pre_tokens=model(before,start_pos,m_l)
 
         pre_tokens=pre_tokens.permute(0,2,1)
 
@@ -167,7 +181,7 @@ if __name__=="__main__":
     dict_data["epoch"]=10
     dict_data["optimizer"] = optim.AdamW(model.parameters(), lr=1e-3)
     dict_data["scheduler"] = optim.lr_scheduler.CosineAnnealingLR(dict_data["optimizer"], T_max = dict_data["epoch"]*len(train_dataloader),eta_min=1e-4)
-    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step20_gl_csl_new3')
+    dict_data["writer"] = SummaryWriter('weight/log_tensorboard/step20_gl_csl_new4')
 
 
     train(model,dict_data)

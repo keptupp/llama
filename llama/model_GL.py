@@ -488,11 +488,11 @@ class Transformer(nn.Module):
         ).cuda()
 
         #增加的全局编码的的大小
-        self.token_nums=8
+        self.token_nums=4
         self.global_token=nn.Parameter(torch.rand(1,self.token_nums,self.params.dim))
 
     # @torch.inference_mode()
-    def forward(self, tokens: torch.Tensor, start_pos: int):
+    def forward(self, tokens: torch.Tensor, start_pos: int,mask_l):
         """
         Perform a forward pass through the Transformer model.
 
@@ -505,7 +505,7 @@ class Transformer(nn.Module):
 
         """
         _bsz, seqlen = tokens.shape
-        
+
         h = self.tok_embeddings(tokens)
 
         # 将可学习全局编码加入token中
@@ -545,7 +545,7 @@ class Transformer(nn.Module):
 
             mask[:start_pos, :start_pos] = 0
 
-            # print("mask",mask.shape)
+            print("mask",mask.shape)
             # print(mask)
 
         for layer in self.layers:

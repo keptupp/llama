@@ -58,10 +58,46 @@ answers=[
     "当然，这篇文章可以总结为："
 ]
 
+# def my_collate_fn(batch):
+#     max_lenght=max([one[0].shape[0] for one in batch])
+
+#     padding_before_token=None
+#     padding_after_token=None
+#     for one in batch:
+#         if padding_before_token is None:
+#             padding_before_token=torch.nn.functional.pad(one[0], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)
+#             padding_after_token=torch.nn.functional.pad(one[1], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)
+#         else:
+#             padding_before_token=torch.cat([padding_before_token,torch.nn.functional.pad(one[0], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)],dim=0)
+#             padding_after_token=torch.cat([padding_after_token,torch.nn.functional.pad(one[1], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)],dim=0)
+
+#     return padding_before_token,padding_after_token
+def my_collate_fn(batch):
+    max_lenght=max([one[0].shape[0] for one in batch])
+
+    padding_before_token=None
+    padding_after_token=None
+    global_w=None
+    i=None
+    for one in batch:
+        if padding_before_token is None:
+            padding_before_token=torch.nn.functional.pad(one[0], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)
+            padding_after_token=torch.nn.functional.pad(one[1], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)
+            global_w=torch.nn.functional.pad(one[2], (0,4-one[2].shape[0]), mode='constant', value=0).unsqueeze(0)
+            i=one[3].unsqueeze(0)
+        else:
+            padding_before_token=torch.cat([padding_before_token,torch.nn.functional.pad(one[0], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)],dim=0)
+            padding_after_token=torch.cat([padding_after_token,torch.nn.functional.pad(one[1], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)],dim=0)
+            global_w=torch.cat([global_w,torch.nn.functional.pad(one[2], (0,4-one[2].shape[0]), mode='constant', value=0).unsqueeze(0)],dim=0)
+            i=torch.cat([i,one[3].unsqueeze(0)],dim=0)
+    return padding_before_token,padding_after_token,global_w,i
 
 class CSLDataset(Dataset):
     def __init__(self,json_path,tokenizer_path,max_len):
         self.summary_list=[]
+        self.global_word=[]
+        self.character=[1919,30267,30214]
+        self.content_l=[]
         with open(json_path,"r",encoding="utf-8") as file:
             for line in file:
                 json_data=json.loads(line)
@@ -72,8 +108,6 @@ class CSLDataset(Dataset):
 
                 question=questions[random.randint(0,len(questions)-1)]#随机选一个问
                 answer=answers[random.randint(0,len(answers)-1)]#随机选一个答
-
-
     
                 #上下文位置
                 if random.randint(0,1)==0:#下，不做处理
@@ -94,21 +128,66 @@ class CSLDataset(Dataset):
                 #随机动词
                 chat_text=chat_text.replace("总结",dy_action[random.randint(0,len(dy_action)-1)])
 
+
+
                 self.summary_list.append(chat_text)
+                self.global_word.append(summary)
 
         self.tokenizer=Tokenizer(tokenizer_path)
         self.max_len=max_len
         print("CSL摘要数据集",len(self.summary_list)/1e6,"M")
+    def word_frequency(self,global_w,tokens):
+        hash_dict=dict()
+        for one in tokens:
+            if one not in self.character:
+                if one not in hash_dict:
+                    hash_dict[one]=1
+                else:
+                    hash_dict[one]+=1
+        w_frequency=[]
+        for one in global_w:
+            if one not in hash_dict:
+                w_frequency.append(0)
+            else:
+                w_frequency.append(hash_dict[one])
+        # print(w_frequency,self.tokenizer.decode(global_w))
+        
+        w_frequency=sorted(enumerate(w_frequency),key=lambda x:x[1])
+        
+        w_list=[]
+        for one in w_frequency[-4:]:
+            w_list.append(global_w[one[0]])
+
+        # # print(self.tokenizer.encode(",。，",bos=False,eos=False))
+        # print(len(w_list))
+        # print(self.tokenizer.decode(w_list))
+        # print(self.tokenizer.decode(global_w))
+        # print(self.tokenizer.decode(tokens))
+        # print("============")
+        return w_list
 
     def __getitem__(self, index):
         texts=self.summary_list[index]
+
+        # 正文结束的下标，用于掩码的时候，对全局编码放开正文，屏蔽答案
+        i=texts.find("助手：")
+        i=len(self.tokenizer.encode(texts[:i],bos=True,eos=False))
+ 
+
+
         tokens=self.tokenizer.encode(texts,bos=True,eos=True)
+
+        global_w=self.tokenizer.encode(self.global_word[index],bos=False,eos=False)
+
+        global_w=self.word_frequency(global_w,tokens)
 
         if(len(tokens)>self.max_len):
             tokens=tokens[:self.max_len-1]+[self.tokenizer.eos_id]
 
         token_tensor=torch.tensor(tokens, dtype=torch.long, device="cuda")
-        return token_tensor[:-1].detach().clone(),token_tensor[1:].detach().clone()
+        global_w=torch.tensor(global_w, dtype=torch.long, device="cuda")
+        i=torch.tensor(i, dtype=torch.long, device="cuda")
+        return token_tensor[:-1].detach().clone(),token_tensor[1:].detach().clone(),global_w,i
 
     def __len__(self):
         return len(self.summary_list)
@@ -138,7 +217,6 @@ class CSLDataset_Eval(Dataset):
                     chat_text+=question.replace("下","上")
                 
                 chat_text+="助手："#止步于此
-
     
                 #随机名词
                 chat_text=chat_text.replace("文章",dy_text[random.randint(0,len(dy_text)-1)])
@@ -169,5 +247,7 @@ class CSLDataset_Eval(Dataset):
 
 if __name__=="__main__":
     csl_dataset=CSLDataset(r"D:\work\Datasets\CSL\train.json",r"weight\tokenizer.model",max_len=512)
-    for a,b in csl_dataset:
-        print(a.shape)
+    csl_dataloader=DataLoader(csl_dataset,batch_size=16,shuffle=True,collate_fn=my_collate_fn)
+    for a,b,c,d in tqdm(csl_dataloader):
+        # print(a.shape,b.shape,c.shape,d.shape)
+        pass
