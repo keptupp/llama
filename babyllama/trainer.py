@@ -32,16 +32,19 @@ def my_collate_fn(batch):
     padding_before_token=None
     padding_after_token=None
     global_w=None
+    i=None
     for one in batch:
         if padding_before_token is None:
             padding_before_token=torch.nn.functional.pad(one[0], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)
             padding_after_token=torch.nn.functional.pad(one[1], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)
             global_w=torch.nn.functional.pad(one[2], (0,4-one[2].shape[0]), mode='constant', value=0).unsqueeze(0)
+            i=one[3].unsqueeze(0)
         else:
             padding_before_token=torch.cat([padding_before_token,torch.nn.functional.pad(one[0], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)],dim=0)
             padding_after_token=torch.cat([padding_after_token,torch.nn.functional.pad(one[1], (0,max_lenght-one[0].shape[0]), mode='constant', value=0).unsqueeze(0)],dim=0)
             global_w=torch.cat([global_w,torch.nn.functional.pad(one[2], (0,4-one[2].shape[0]), mode='constant', value=0).unsqueeze(0)],dim=0)
-    return padding_before_token,padding_after_token,global_w
+            i=torch.cat([i,one[3].unsqueeze(0)],dim=0)
+    return padding_before_token,padding_after_token,global_w,i
 
 nums_val=0
 @torch.no_grad()
@@ -159,16 +162,16 @@ if __name__=="__main__":
     # deepctrldataset=DeepctrlDataset(r"/home/liuzheng/Data/sft_data_zh.jsonl",r"weight/tokenizer.model",512)
     # deepctrl_dataloader=DataLoader(deepctrldataset,batch_size=16,shuffle=False,collate_fn=my_collate_fn)
 
-    csl_dataset=CSLDataset(r"/home/liuzheng/Data/CSL/train.json",r"weight/tokenizer.model",max_len=512)
+    csl_dataset=CSLDataset(r"D:/work/Datasets/CSL/train.json",r"weight/tokenizer.model",max_len=512)
     # csl_dataloader=DataLoader(chat_dataset,batch_size=16,shuffle=True,collate_fn=my_collate_fn)
 
-    csl_val_dataset=CSLDataset(r"/home/liuzheng/Data/CSL/val.json",r"weight/tokenizer.model",max_len=512)
+    csl_val_dataset=CSLDataset(r"D:/work/Datasets/CSL/val.json",r"weight/tokenizer.model",max_len=512)
 
 
     train_dataset=ConcatDataset([csl_dataset])
-    train_dataloader=DataLoader(train_dataset,batch_size=16,shuffle=True,collate_fn=my_collate_fn)
+    train_dataloader=DataLoader(train_dataset,batch_size=2,shuffle=True,collate_fn=my_collate_fn)
     
-    csl_val_dataloader=DataLoader(csl_val_dataset,batch_size=16,shuffle=False,collate_fn=my_collate_fn)
+    csl_val_dataloader=DataLoader(csl_val_dataset,batch_size=2,shuffle=False,collate_fn=my_collate_fn)
 
 
 

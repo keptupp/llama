@@ -249,5 +249,5 @@ if __name__=="__main__":
     csl_dataset=CSLDataset(r"D:\work\Datasets\CSL\train.json",r"weight\tokenizer.model",max_len=512)
     csl_dataloader=DataLoader(csl_dataset,batch_size=16,shuffle=True,collate_fn=my_collate_fn)
     for a,b,c,d in tqdm(csl_dataloader):
-        # print(a.shape,b.shape,c.shape,d.shape)
+        print(a.shape,b.shape,c.shape,d.shape)
         pass

@@ -119,10 +119,11 @@ class Llama(nn.Module):
     def forward(
         self,
         prompt_tokens: List[List[int]],
-        prev_pos=0
+        prev_pos=0,
+        mask_l=0,
     ):
 
-        logits = self.model(prompt_tokens, prev_pos)
+        logits = self.model(prompt_tokens, prev_pos,mask_l)
         
         return logits
     

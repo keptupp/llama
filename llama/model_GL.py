@@ -228,23 +228,6 @@ class Attention(nn.Module):
             bias=False,
         )
 
-        # self.cache_k = torch.zeros(
-        #     (
-        #         args.max_batch_size,
-        #         args.max_seq_len,
-        #         self.n_local_kv_heads,
-        #         self.head_dim,
-        #     )
-        # ).cuda()
-        # self.cache_v = torch.zeros(
-        #     (
-        #         args.max_batch_size,
-        #         args.max_seq_len,
-        #         self.n_local_kv_heads,
-        #         self.head_dim,
-        #     )
-        # ).cuda()
-
     def forward(
         self,
         x: torch.Tensor,
@@ -392,11 +375,8 @@ class TransformerBlock(nn.Module):
         self.advance_padding=4
         
         self.local_cnn=nn.Sequential(
-            nn.Conv1d(in_channels=args.dim, out_channels=args.dim, kernel_size=5,padding=self.advance_padding),
-            nn.LeakyReLU(),
-            nn.Conv1d(in_channels=args.dim, out_channels=4*args.dim, kernel_size=1),
-            nn.LeakyReLU(),
-            nn.Conv1d(in_channels=4*args.dim, out_channels=args.dim, kernel_size=1),
+            nn.Conv1d(in_channels=args.dim, out_channels=2*args.dim, kernel_size=5,padding=self.advance_padding),
+            nn.Conv1d(in_channels=2*args.dim, out_channels=args.dim, kernel_size=1),
             nn.Tanh()
         )
 
@@ -536,20 +516,33 @@ class Transformer(nn.Module):
             # only for the new sequence. Thus, the matrix of scores is of size
             # (seqlen, cache_len + seqlen), and the only masked entries are (i, j) for
             # j > cache_len + i, since row i corresponds to token cache_len + i.
-            mask = torch.hstack([
-                torch.zeros((seqlen, 0), device=tokens.device),
-                mask
-            ]).type_as(h)
+            # mask = torch.hstack([
+            #     torch.zeros((seqlen, 0), device=tokens.device),
+            #     mask
+            # ]).type_as(h)
 
-            # print(mask)
-
+            
+        
             mask[:start_pos, :start_pos] = 0
 
-            print("mask",mask.shape)
+            #前几个全局编码保持对输入文档的关注
+            masks=torch.empty((0,seqlen, seqlen)).to(mask.device)
+            for i in range(mask_l.shape[0]):
+                temp=mask.detach().clone().unsqueeze(0)
+                temp[:,:self.token_nums,:(self.token_nums+mask_l[i])]=0
+
+                # print("第一行总和",sum(temp[0,0,:])," 长度",(self.token_nums+mask_l[i]))
+                masks=torch.cat([masks,temp],dim=0)
+            masks=masks.unsqueeze(1)
+
+            # 这里对mask再加工一下，使前k个global_token能够对后续的文档内容进行注意力，但是不能暴露回答的token
+
+
+            # print("mask",mask.shape)
             # print(mask)
 
         for layer in self.layers:
-            h = layer(h, 0, freqs_cis, mask)
+            h = layer(h, 0, freqs_cis, masks)
         h = self.norm(h)
         # output = self.output(h).float()
 
